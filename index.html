@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BATISFERA // Pesca Abissal Contemplativa</title>
+<style>
+  :root {
+    --bg-void: #05080b;
+    --bg-panel: #0a0f14;
+    --bg-card: #0e151c;
+    --border-dim: #18232e;
+    --border-active: #2c4257;
+    --text-main: #c2d1df;
+    --text-muted: #5c7185;
+    --text-bright: #eef6fc;
+    --accent-cyan: #38bdf8;
+    --accent-teal: #14b8a6;
+    --accent-amber: #fbbf24;
+    --accent-red: #f87171;
+    --r-0: #7f94a8;
+    --r-1: #34d399;
+    --r-2: #38bdf8;
+    --r-3: #818cf8;
+    --r-4: #c084fc;
+    --r-5: #f472b6;
+    --r-6: #fbbf24;
+    --r-7: #f87171;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-void);
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app-shell {
+    max-width: 1180px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+  }
+
+  header {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-panel);
+    padding: 14px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text-bright);
+  }
+
+  .brand span {
+    font-size: 11px;
+    color: var(--text-muted);
+    border-left: 1px solid var(--border-dim);
+    padding-left: 10px;
+  }
+
+  .hud-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .metric {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metric-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .metric-val {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-bright);
+  }
+
+  nav {
+    display: flex;
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-panel);
+    overflow-x: auto;
+  }
+
+  .nav-btn {
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border-dim);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .nav-btn:hover {
+    color: var(--text-bright);
+    background-color: var(--bg-card);
+  }
+
+  .nav-btn.active {
+    color: var(--accent-cyan);
+    background-color: var(--bg-card);
+    box-shadow: inset 0 -2px 0 var(--accent-cyan);
+  }
+
+  .tab-panel {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .tab-panel.active {
+    display: flex;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .grid-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .box {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-panel);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .box-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-dim);
+    padding-bottom: 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .specimen-stage {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-void);
+    height: 210px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .specimen-meta-tag {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .specimen-depth-tag {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .specimen-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .specimen-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-bright);
+  }
+
+  .specimen-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    border-top: 1px solid var(--border-dim);
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+
+  .stat-cell span:first-child {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .stat-cell span:last-child {
+    font-size: 12px;
+    color: var(--text-bright);
+  }
+
+  .btn {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-active);
+    color: var(--text-bright);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 9px 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn:hover:not(:disabled) {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: var(--border-dim);
+  }
+
+  .btn-primary {
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+  }
+
+  .btn-amber {
+    border-color: var(--accent-amber);
+    color: var(--accent-amber);
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    background-color: var(--bg-void);
+    border: 1px solid var(--border-dim);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background-color: var(--accent-cyan);
+    width: 0%;
+  }
+
+  .log-feed {
+    height: 290px;
+    overflow-y: auto;
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-void);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .log-entry {
+    border-bottom: 1px solid #0e151c;
+    padding-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .log-time {
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .upgrade-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .upgrade-item {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-card);
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .upgrade-desc {
+    max-width: 560px;
+  }
+
+  .upgrade-title {
+    color: var(--text-bright);
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .upgrade-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .zone-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 8px;
+  }
+
+  .zone-card {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-card);
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .zone-card.selected {
+    border-color: var(--accent-cyan);
+  }
+
+  .zone-card.locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .milestone-pills {
+    display: flex;
+    gap: 4px;
+    margin-top: 3px;
+  }
+
+  .m-pill {
+    font-size: 9px;
+    padding: 1px 5px;
+    border: 1px solid var(--border-dim);
+    color: var(--text-muted);
+    background: var(--bg-void);
+  }
+
+  .m-pill.unlocked {
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
+  }
+
+  .filters-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  select, input[type="text"], textarea {
+    background-color: var(--bg-void);
+    border: 1px solid var(--border-active);
+    color: var(--text-bright);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .bestiary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .bestiary-card {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-card);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .bestiary-card.undiscovered {
+    opacity: 0.65;
+    border-style: dashed;
+  }
+
+  .doctrine-branch {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-card);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .doctrine-node {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-panel);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .doctrine-node.maxed {
+    border-color: var(--accent-teal);
+  }
+
+  .challenge-card {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-card);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .challenge-card.selected-challenge {
+    border-color: var(--accent-amber);
+  }
+
+  .challenge-card.completed-challenge {
+    border-color: var(--accent-teal);
+  }
+
+  .active-challenge-strip {
+    border: 1px solid var(--accent-amber);
+    background-color: #1a1406;
+    padding: 10px 14px;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .r-0 { color: var(--r-0); }
+  .r-1 { color: var(--r-1); }
+  .r-2 { color: var(--r-2); }
+  .r-3 { color: var(--r-3); }
+  .r-4 { color: var(--r-4); }
+  .r-5 { color: var(--r-5); }
+  .r-6 { color: var(--r-6); }
+  .r-7 { color: var(--r-7); }
+
+  .banner-offline {
+    border: 1px solid var(--accent-teal);
+    background-color: #08181a;
+    padding: 12px 16px;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  svg.icon {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  .mono-note {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div id="offlineBanner" class="banner-offline">
+    <div>
+      <strong style="color: var(--accent-teal);">RELATÓRIO DE SONDA AUTÔNOMA (OFFLINE)</strong>
+      <div id="offlineSummary" class="mono-note" style="color: var(--text-main); margin-top: 2px;"></div>
+    </div>
+    <button class="btn" onclick="dismissOffline()">ARQUIVAR REGISTRO</button>
+  </div>
+
+  <div id="activeChallengeBanner" class="active-challenge-strip">
+    <div>
+      <strong style="color: var(--accent-amber);" id="activeChallengeTitle">PROTOCOLO DE DESAFIO ATIVO</strong>
+      <div class="mono-note" style="color: var(--text-main);" id="activeChallengeDesc"></div>
+    </div>
+    <button class="btn btn-amber" onclick="abortChallenge()">ABORTAR PROTOCOLO</button>
+  </div>
+
+  <header>
+    <div class="brand">
+      <svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;color:var(--accent-cyan);">
+        <circle cx="12" cy="12" r="9"/>
+        <circle cx="12" cy="12" r="4"/>
+        <line x1="12" y1="3" x2="12" y2="12"/>
+      </svg>
+      <h1>BATISFERA // ABYSSAL</h1>
+      <span id="combCountTag">SONDA DE LONGO ALCANCE</span>
+    </div>
+
+    <div class="hud-metrics">
+      <div class="metric">
+        <span class="metric-label">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v15a3 3 0 0 1-6 0v-2"/><circle cx="12" cy="5" r="2"/></svg>
+          Biomassa / Créditos
+        </span>
+        <span class="metric-val" id="hudCurrency">0</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="8 18 12 22 16 18"/><line x1="8" y1="6" x2="16" y2="6"/></svg>
+          Profundidade Alvo
+        </span>
+        <span class="metric-val" id="hudDepth">0 m</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">
+          <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9"/></svg>
+          Dados Abissais
+        </span>
+        <span class="metric-val" id="hudPrestige">0 (x1.00)</span>
+      </div>
+    </div>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" data-tab="sonar" onclick="switchTab('sonar')">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12L18 6"/><circle cx="12" cy="12" r="2"/></svg>
+      SONDA &amp; CAPTURA
+    </button>
+    <button class="nav-btn" data-tab="upgrades" onclick="switchTab('upgrades')">
+      <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      ENGENHARIA
+    </button>
+    <button class="nav-btn" data-tab="doctrines" onclick="switchTab('doctrines')">
+      <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+      DOUTRINAS DA SONDA
+    </button>
+    <button class="nav-btn" data-tab="bestiary" onclick="switchTab('bestiary')">
+      <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="13" y2="15"/></svg>
+      BESTIÁRIO (<span id="navCatalogPct">0.0000%</span>)
+    </button>
+    <button class="nav-btn" data-tab="expedition" onclick="switchTab('expedition')">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+      NOVA EXPEDIÇÃO
+    </button>
+    <button class="nav-btn" data-tab="settings" onclick="switchTab('settings')">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1l2.1-2.1M17 7l2.1-2.1"/></svg>
+      SISTEMA
+    </button>
+  </nav>
+
+  <!-- ABA 1: SONDA & CAPTURA -->
+  <section id="tab-sonar" class="tab-panel active">
+    <div class="box">
+      <div class="box-header">
+        <span>SELETOR DE ESTRATO BATIMÉTRICO &amp; MARCOS DE CATALOGAÇÃO (0m - 50.000m)</span>
+        <span id="maxDepthInfo">LIMITE OPERACIONAL: 250 m</span>
+      </div>
+      <div class="mono-note" id="zoneMilestoneSummary">
+        Marcos por camada: 10% (+10% Biomassa da Zona) | 25% (+25% Biomassa da Zona) | 50% (+60% Biomassa da Zona) | 100% (+150% Biomassa da Zona).
+      </div>
+      <div id="zoneGrid" class="zone-list"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="box">
+        <div class="box-header">
+          <span>ESPÉCIME EM ANÁLISE</span>
+          <span id="specimenRarityBadge" class="r-0">AGUARDANDO SINAL</span>
+        </div>
+
+        <div class="specimen-stage">
+          <span class="specimen-meta-tag" id="specimenCodeTag">ID: ---</span>
+          <div id="specimenSvgContainer">
+            <svg width="220" height="140" viewBox="0 0 220 140">
+              <line x1="20" y1="70" x2="200" y2="70" stroke="#18232e" stroke-width="1" stroke-dasharray="4 4"/>
+              <line x1="110" y1="15" x2="110" y2="125" stroke="#18232e" stroke-width="1" stroke-dasharray="4 4"/>
+              <text x="110" y="74" fill="#5c7185" font-family="monospace" font-size="10" text-anchor="middle">NENHUM CONTATO</text>
+            </svg>
+          </div>
+          <span class="specimen-depth-tag" id="specimenZoneTag">0 m</span>
+        </div>
+
+        <div class="specimen-info">
+          <div class="specimen-title" id="specimenName">Sonda em Posição</div>
+          <div class="mono-note" id="specimenDesc">Aguarde o ciclo automático de recolhimento do guincho da batisfera.</div>
+          <div class="specimen-stats">
+            <div class="stat-cell">
+              <span>MASSA</span>
+              <span id="specimenWeight">---</span>
+            </div>
+            <div class="stat-cell">
+              <span>COMPRIMENTO</span>
+              <span id="specimenLength">---</span>
+            </div>
+            <div class="stat-cell">
+              <span>VALOR DE COLETA</span>
+              <span id="specimenValue">---</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">
+            <span>CICLO DE RECOLHIMENTO AUTOMÁTICO</span>
+            <span id="cycleTimerLabel">0.0s / 18.0s</span>
+          </div>
+          <div class="progress-track">
+            <div id="cycleProgressFill" class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-header">
+          <span>REGISTRO TELEMÉTRICO DE BORDO</span>
+          <span id="totalCatchesLabel">CAPTURAS: 0</span>
+        </div>
+        <div id="logFeed" class="log-feed"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABA 2: ENGENHARIA / UPGRADES -->
+  <section id="tab-upgrades" class="tab-panel">
+    <div class="box">
+      <div class="box-header">
+        <span>SISTEMAS DA BATISFERA (ESCALA EXPONENCIAL MULTI-ANO)</span>
+        <span>CRÉDITOS DISPONÍVEIS: <strong id="upgCurrencyDisplay" style="color:var(--text-bright);">0</strong></span>
+      </div>
+      <div id="upgradesContainer" class="upgrade-list"></div>
+    </div>
+  </section>
+
+  <!-- ABA 3: DOUTRINAS DA SONDA (ÁRVORE DE PESQUISA) -->
+  <section id="tab-doctrines" class="tab-panel">
+    <div class="box">
+      <div class="box-header">
+        <span>ÁRVORE DE PESQUISA // DOUTRINAS DA SONDA</span>
+        <span>DADOS ABISSAIS DISPONÍVEIS: <strong id="docDataDisplay" style="color:var(--accent-cyan);">0</strong></span>
+      </div>
+      <p class="mono-note">
+        Invista Dados Abissais permanentes nos três ramos de doutrina científica. O bônus base passivo dos Dados Abissais é calculado sobre o seu saldo disponível.
+      </p>
+      <div id="doctrinesContainer" class="grid-3"></div>
+    </div>
+  </section>
+
+  <!-- ABA 4: BESTIÁRIO -->
+  <section id="tab-bestiary" class="tab-panel">
+    <div class="box">
+      <div class="box-header">
+        <span>CATÁLOGO TAXONÔMICO ABISSAL</span>
+        <span id="catalogStatsLabel">0 / 256.000 ESPÉCIES CATALOGADAS (0.0000%)</span>
+      </div>
+      <div class="filters-bar">
+        <select id="filterDiscovery" onchange="renderBestiary()">
+          <option value="discovered">ESTADO: CATALOGADAS</option>
+          <option value="undiscovered">ESTADO: NÃO CATALOGADAS</option>
+        </select>
+        <select id="filterZone" onchange="renderBestiary()">
+          <option value="all">TODAS AS PROFUNDIDADES</option>
+        </select>
+        <select id="filterRarity" onchange="renderBestiary()">
+          <option value="all">TODAS AS RARIDADES</option>
+        </select>
+        <select id="filterMutation" onchange="renderBestiary()">
+          <option value="all">TODAS AS MUTAÇÕES</option>
+          <option value="0">Forma Basal</option>
+          <option value="1">Mutação Bioluminescente</option>
+          <option value="2">Mutação Gigantismo</option>
+          <option value="3">Mutação Polimórfica</option>
+        </select>
+        <select id="filterSort" onchange="renderBestiary()">
+          <option value="rarity_desc">ORDEM: MAIOR RARIDADE</option>
+          <option value="order_asc">ORDEM: DESCOBERTA (1ª → ÚLTIMA)</option>
+          <option value="order_desc">ORDEM: DESCOBERTA (RECENTES)</option>
+          <option value="count_desc">ORDEM: MAIS ENCONTRADAS</option>
+          <option value="zone_desc">ORDEM: MAIOR PROFUNDIDADE</option>
+        </select>
+        <input type="text" id="filterSearch" placeholder="Filtrar por nome..." oninput="renderBestiary()">
+      </div>
+      <div id="bestiaryInfoNote" class="mono-note"></div>
+      <div id="bestiaryGrid" class="bestiary-grid"></div>
+    </div>
+  </section>
+
+  <!-- ABA 5: NOVA EXPEDIÇÃO & DESAFIOS -->
+  <section id="tab-expedition" class="tab-panel">
+    <div class="box">
+      <div class="box-header">
+        <span>PROTOCOLO DE NOVA EXPEDIÇÃO (PRESTÍGIO)</span>
+        <span>EXPEDIÇÕES CONCLUÍDAS: <strong id="prestigeCountLabel">0</strong></span>
+      </div>
+      <p style="color:var(--text-main); max-width:780px;">
+        Ao encerrar a expedição atual, sua embarcação retorna à superfície para transferência de dados científicos.
+        Seus créditos e melhorias de engenharia são reiniciados, mas o <strong>Bestiário</strong>, as <strong>Doutrinas</strong> e os <strong>Desafios Concluídos</strong> permanecem intactos.
+      </p>
+      <div class="grid-2" style="margin-top:4px;">
+        <div class="box" style="background:var(--bg-card);">
+          <span class="mono-note">DADOS ABISSAIS ATUAIS</span>
+          <strong style="font-size:18px; color:var(--text-bright);" id="currentPrestigeData">0</strong>
+          <span class="mono-note" id="currentPrestigeMult">Multiplicador Global Atual: x1.00</span>
+        </div>
+        <div class="box" style="background:var(--bg-card);">
+          <span class="mono-note">PROJEÇÃO AO RETORNAR AGORA</span>
+          <strong style="font-size:18px; color:var(--accent-cyan);" id="pendingPrestigeData">+0</strong>
+          <span class="mono-note" id="pendingPrestigeMult">Novo Multiplicador Global: x1.00</span>
+        </div>
+      </div>
+
+      <div class="box-header" style="margin-top:8px;">
+        <span>DESAFIOS DE EXPEDIÇÃO (RESTRIÇÕES OPCIONAIS PARA A PRÓXIMA EXPEDIÇÃO)</span>
+        <span id="challengeBonusSummary" style="color:var(--accent-teal);">BÔNUS DE DESAFIOS: +0% DADOS | +0% RARIDADE</span>
+      </div>
+      <div class="mono-note">
+        Selecione um protocolo restritivo abaixo antes de iniciar a expedição. Ao atingir a meta de biomassa durante a expedição restrita, o desafio é concluído permanentemente.
+      </div>
+      <div id="challengesGrid" class="grid-2"></div>
+
+      <div style="margin-top:8px;">
+        <button id="btnPrestige" class="btn btn-primary" onclick="triggerPrestige()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+          <span id="btnPrestigeLabel">INICIAR NOVA EXPEDIÇÃO</span>
+        </button>
+        <div class="mono-note" style="margin-top:6px;">Requer acúmulo mínimo de 1.00e6 créditos na expedição atual (ou meta do desafio ativo) para retornar.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABA 6: ARQUIVO & SISTEMA -->
+  <section id="tab-settings" class="tab-panel">
+    <div class="box">
+      <div class="box-header">
+        <span>PERSISTÊNCIA &amp; BACKUP BASE64</span>
+        <span id="saveStatusLabel">SALVAMENTO AUTOMÁTICO ATIVO</span>
+      </div>
+      <p class="mono-note">
+        O progresso é gravado localmente com carimbo de tempo real (UTC). Mesmo após meses ou anos fechado, a sonda calculará a coleta autônoma acumulada ao reabrir.
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <button class="btn" onclick="exportSave()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          EXPORTAR SAVE (BASE64)
+        </button>
+        <button class="btn" onclick="importSave()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          IMPORTAR SAVE (BASE64)
+        </button>
+        <button class="btn" style="border-color:#7f1d1d; color:#f87171;" onclick="hardReset()">
+          REINICIAR DADOS DE FÁBRICA
+        </button>
+      </div>
+      <textarea id="saveStringBox" rows="4" placeholder="Código Base64 de exportação/importação aparecerá aqui..."></textarea>
+    </div>
+  </section>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  const SAVE_KEY = "batisfera_abyssal_save_v2";
+
+  const ZONES = [
+    { id: 0, name: "Zona Epipelágica", min: 0, max: 200, reqDepth: 0, mult: 1 },
+    { id: 1, name: "Zona Mesopelágica", min: 200, max: 1000, reqDepth: 200, mult: 2.6 },
+    { id: 2, name: "Zona Batipelágica", min: 1000, max: 4000, reqDepth: 1000, mult: 7.5 },
+    { id: 3, name: "Planície Abissal", min: 4000, max: 6000, reqDepth: 4000, mult: 24 },
+    { id: 4, name: "Fossa Hadal Superior", min: 6000, max: 11000, reqDepth: 6000, mult: 80 },
+    { id: 5, name: "Fenda Tectônica", min: 11000, max: 18000, reqDepth: 11000, mult: 280 },
+    { id: 6, name: "Manto Suboceânico", min: 18000, max: 26000, reqDepth: 18000, mult: 1050 },
+    { id: 7, name: "Câmara Hidrotermal", min: 26000, max: 35000, reqDepth: 26000, mult: 4200 },
+    { id: 8, name: "Núcleo Barométrico", min: 35000, max: 43000, reqDepth: 35000, mult: 18000 },
+    { id: 9, name: "Singularidade Abissal", min: 43000, max: 50000, reqDepth: 43000, mult: 85000 }
+  ];
+
+  // Marcos permanentes por percentual catalogado em cada camada
+  const ZONE_MILESTONES = [
+    { pct: 0.10, label: "10%", bonus: 0.10 },
+    { pct: 0.25, label: "25%", bonus: 0.25 },
+    { pct: 0.50, label: "50%", bonus: 0.60 },
+    { pct: 1.00, label: "100%", bonus: 1.50 }
+  ];
+
+  const RARITIES = [
+    { id: 0, name: "Comum", weight: 1000000, mult: 1.0, css: "r-0" },
+    { id: 1, name: "Incomum", weight: 180000, mult: 1.8, css: "r-1" },
+    { id: 2, name: "Raro", weight: 32000, mult: 3.6, css: "r-2" },
+    { id: 3, name: "Abissal", weight: 5500, mult: 8.0, css: "r-3" },
+    { id: 4, name: "Ancestral", weight: 950, mult: 19.0, css: "r-4" },
+    { id: 5, name: "Anômalo", weight: 150, mult: 48.0, css: "r-5" },
+    { id: 6, name: "Relíquia", weight: 20, mult: 130.0, css: "r-6" },
+    { id: 7, name: "Mitológico", weight: 2, mult: 400.0, css: "r-7" }
+  ];
+  const TOTAL_RARITY_WEIGHT = RARITIES.reduce((acc, r) => acc + r.weight, 0);
+
+  const PREFIXES = [
+    "Cego", "Translúcido", "Fóssil", "Ossudo", "Silencioso", "Pálido", "Quitinoso", "Sombrio",
+    "Abissal", "Espectral", "Calcificado", "Gelatinoso", "Blindado", "Críptico", "Arcaico", "Vítreo"
+  ];
+
+  const SPECIES_BY_ZONE = [
+    [
+      "Sardinha-de-Fenda", "Enguia-Vaga", "Peixe-Agulha", "Carapau-Cinza", "Lula-Anã",
+      "Góbio-Marinho", "Peixe-Vidro", "Arenque-Pálido", "Cavala-Funda", "Solha-Cega",
+      "Anchova-Fantasma", "Blenio-de-Rocha", "Sargo-Cinzento", "Tainha-Silenciosa", "Peixe-Flauta",
+      "Robalo-de-Sombra", "Garoupa-Pálida", "Agulhão-Fino", "Peixe-Folha", "Linguado-Vítreo",
+      "Pargo-Fóssil", "Xaréu-Noturno", "Peixe-Cachimbo", "Cavalo-Marinho-Cego", "Moreia-de-Areia"
+    ],
+    [
+      "Peixe-Lanterna", "Peixe-Machado", "Dragão-Negro", "Víbora-Marinha", "Lula-Vampiro",
+      "Peixe-Barril", "Polvo-Telescópio", "Peixe-Sabre", "Medusa-Coroa", "Peixe-Escorpião",
+      "Peixe-Faca", "Lula-de-Vidro", "Peixe-Dente-de-Sabre", "Enguia-Bico-de-Pato", "Peixe-Pérola",
+      "Peixe-Escama-Fina", "Lula-Lanterna", "Polvo-de-Cristal", "Peixe-Mandíbula", "Peixe-Estrela-Negra",
+      "Medusa-Sino", "Peixe-Gato-Pelágico", "Enguia-Fita", "Peixe-Espelho", "Lula-Joia"
+    ],
+    [
+      "Enguia-Pelicano", "Tamboril-Negro", "Tubarão-Cobra", "Quimera-Pálida", "Peixe-Ogro",
+      "Isópode-Gigante", "Peixe-Rato", "Lula-Colossal", "Peixe-Aranha", "Sifonóforo-Abissal",
+      "Tubarão-Duende", "Peixe-Baleia", "Polvo-Manta-Negro", "Peixe-Boca-Larga", "Enguia-Abissal",
+      "Peixe-Diabo", "Lula-Chicote", "Medusa-Capacete", "Peixe-Lagarto-Fundo", "Tubarão-Charuto",
+      "Quimera-de-Nariz-Longo", "Peixe-Lobo-Batipelágico", "Sifonóforo-Gigante", "Polvo-Gelatinoso", "Peixe-Sapo-Negro"
+    ],
+    [
+      "Peixe-Tripé", "Pepino-Translúcido", "Lírio-de-Pedra", "Enguia-Sinafobrânquida", "Peixe-Caracol",
+      "Anêmona-Cega", "Aranha-do-Mar", "Polvo-Dumbo", "Peixe-Cusk", "Ouriço-de-Lodo",
+      "Estrela-do-Lodo", "Caranguejo-Aranha-Cego", "Peixe-Granadeiro", "Pepino-Marinho-Alado", "Esponja-de-Vidro",
+      "Polvo-Orelhudo", "Peixe-Brotula", "Vermes-de-Lodo", "Ofiúro-Abissal", "Crinoide-Fóssil",
+      "Peixe-Rato-Branco", "Camarão-Cego", "Anêmona-Vênus", "Estrela-Cesta", "Peixe-Placa-Fina"
+    ],
+    [
+      "Peixe-Caracol-Hadal", "Anfípode-Titã", "Holo-Medusa", "Serpente-de-Fossa", "Vermes-Tubulares",
+      "Nautilo-Negro", "Enguia-Fantomática", "Estrela-Serpente", "Peixe-Fantasma", "Caranguejo-Branco",
+      "Anfípode-Branco", "Peixe-Caracol-Etéreo", "Poliqueta-Hadal", "Pepino-de-Fossa", "Isópode-Hadal",
+      "Medusa-Abissal-Pálida", "Enguia-Translúcida", "Nautilo-Cego", "Caranguejo-Fantasma", "Peixe-Sombra-Hadal",
+      "Lula-de-Fossa", "Estrela-Hadal", "Anêmona-de-Pressão", "Peixe-Gelatina", "Sifonóforo-Hadal"
+    ],
+    [
+      "Leviatã-Magmático", "Trilobita-Vivo", "Enguia-Sulfúrica", "Peixe-Basalto", "Lula-Tectônica",
+      "Quimera-de-Ferro", "Nematóide-Colossal", "Sanguessuga-Pétrea", "Peixe-Cinza", "Medusa-Obsidiana",
+      "Escorpião-Tectônico", "Peixe-Ardósia", "Caranguejo-de-Basalto", "Amonite-Pétreo", "Enguia-de-Fenda",
+      "Polvo-Tectônico", "Peixe-Granito", "Trilobita-Blindado", "Vermes-de-Rocha", "Quimera-Volcânica",
+      "Lula-de-Obsidiana", "Peixe-Fóssil-Vivo", "Medusa-de-Cinzas", "Isópode-Pétreo", "Serpente-Tectônica"
+    ],
+    [
+      "Amonite-Abissal", "Serpente-do-Manto", "Peixe-Cristal", "Celacanto-Negro", "Artrópode-Fóssil",
+      "Peixe-Placa", "Lula-Cristalina", "Dragão-de-Ardósia", "Hidra-Subterrânea", "Peixe-Prisma",
+      "Celacanto-Cego", "Amonite-Vítreo", "Peixe-Quartzo", "Enguia-Cristalina", "Polvo-Prisma",
+      "Quimera-de-Quartzo", "Trilobita-Cristal", "Medusa-Geométrica", "Peixe-Facetado", "Nautilo-Prisma",
+      "Serpente-Vítrea", "Caranguejo-Cristalino", "Hidra-Abissal", "Peixe-Espelho-Negro", "Lula-Poligonal"
+    ],
+    [
+      "Ignis-Enguia", "Caranguejo-Chaminé", "Peixe-Vulcânico", "Polvo-Escaldante", "Vermes-de-Pirita",
+      "Medusa-Térmica", "Peixe-Enxofre", "Escorpião-Magma", "Lula-Incandescente", "Quimera-Cinza",
+      "Camarão-Hidrotermal", "Peixe-Fumarola", "Caranguejo-de-Pirita", "Enguia-Térmica", "Polvo-de-Enxofre",
+      "Nautilo-Térmico", "Trilobita-Sulfúrico", "Medusa-Fumarola", "Peixe-Braseiro", "Vermes-Sulfúricos",
+      "Lula-Térmica", "Anêmona-Hidrotermal", "Peixe-Mineral", "Escorpião-de-Pirita", "Serpente-Térmica"
+    ],
+    [
+      "Barômetro-Vivo", "Peixe-Chumbo", "Leviatã-Comprimido", "Nautilo-de-Osmio", "Enguia-Gravitacional",
+      "Peixe-Monólito", "Medusa-Densa", "Quimera-Núcleo", "Trilobita-Abissal", "Serpente-Bárica",
+      "Peixe-Tungstênio", "Caranguejo-Comprimido", "Polvo-Monólito", "Lula-Gravitacional", "Amonite-de-Osmio",
+      "Enguia-Bárica", "Peixe-Núcleo", "Medusa-Chumbo", "Isópode-Denso", "Quimera-Gravitacional",
+      "Nautilo-Monólito", "Peixe-Pressão-Extrema", "Trilobita-Denso", "Serpente-Núcleo", "Leviatã-Bárico"
+    ],
+    [
+      "Entidade-Pelágica", "Eco-de-Leviatã", "Peixe-Horizonte", "Sombra-Primordial", "Nautilo-Eterno",
+      "Serpente-Cósmica", "Oráculo-Abissal", "Arquiteto-do-Fundo", "Espectro-Hadal", "Gênese-Abissal",
+      "Vórtice-Vivo", "Peixe-Singularidade", "Leviatã-Eterno", "Quimera-Primordial", "Lula-do-Horizonte",
+      "Medusa-Cósmica", "Enguia-do-Vácuo", "Amonite-Ancestral", "Polvo-Oráculo", "Trilobita-Eterno",
+      "Sombra-do-Abismo", "Peixe-Infinito", "Eco-Primordial", "Serpente-do-Horizonte", "Monólito-Pelágico"
+    ]
+  ];
+
+  const SUFFIXES = [
+    "do Crepúsculo", "da Fenda", "sem Olhos", "de Espinhos", "do Silêncio", "das Cinzas", "do Vácuo", "da Pressão",
+    "do Abismo", "da Penumbra", "de Cristal", "do Fundo", "da Eternidade", "do Eco", "da Escuridão", "do Limiar"
+  ];
+
+  const MUTATIONS = [
+    { name: "Forma Basal", mult: 1.0, bodyMod: 0 },
+    { name: "Mutação Bioluminescente", mult: 1.18, bodyMod: 1 },
+    { name: "Mutação Gigantismo", mult: 1.42, bodyMod: 2 },
+    { name: "Mutação Polimórfica", mult: 1.75, bodyMod: 3 }
+  ];
+
+  const SPECIES_PER_ZONE = SPECIES_BY_ZONE[0].length;
+  const COMBINATIONS_PER_ZONE = PREFIXES.length * SPECIES_PER_ZONE * SUFFIXES.length * MUTATIONS.length;
+  const TOTAL_COMBINATIONS = ZONES.length * COMBINATIONS_PER_ZONE;
+
+  const UPGRADE_DEFS = [
+    {
+      id: "line",
+      name: "Comprimento da Linha de Titânio",
+      baseCost: 75,
+      costGrowth: 2.35,
+      desc: (lvl) => `Estende o alcance do cabo. Alcance atual: ${formatNumber(getLineReach(lvl))} m`
+    },
+    {
+      id: "hull",
+      name: "Casco de Pressão Hidrostática",
+      baseCost: 160,
+      costGrowth: 2.45,
+      desc: (lvl) => `Permite suportar estratos profundos. Limite estrutural: ${formatNumber(getHullLimit(lvl))} m`
+    },
+    {
+      id: "winch",
+      name: "Automação do Guincho Contínuo",
+      baseCost: 110,
+      costGrowth: 2.15,
+      desc: (lvl) => `Reduz o ciclo de coleta automática. Intervalo atual: ${getCycleDuration(lvl).toFixed(2)}s`
+    },
+    {
+      id: "bait",
+      name: "Isca Biológica Sintética",
+      baseCost: 240,
+      costGrowth: 2.25,
+      desc: (lvl) => `Multiplica o valor de biomassa extraída. Bônus atual: x${formatNumber(getBaitMult(lvl))}`
+    },
+    {
+      id: "sonar",
+      name: "Sonar de Ressonância Rara",
+      baseCost: 600,
+      costGrowth: 2.55,
+      desc: (lvl) => `Amplifica a probabilidade de espécimes raros e anômalos. Sintonização: +${(lvl * 4).toFixed(0)}%`
+    }
+  ];
+
+  // Árvore de Pesquisa / Doutrinas da Sonda (3 Ramos)
+  const DOCTRINE_BRANCHES = [
+    {
+      id: "telemetry",
+      title: "RAMO I // TELEMETRIA",
+      subtitle: "Foco em descoberta de espécies inéditas e rastreio",
+      nodes: [
+        {
+          id: "tel_1",
+          name: "Varredura de Espécimes Inéditos",
+          maxLvl: 10,
+          baseCost: 5,
+          costMult: 2.8,
+          desc: (lvl) => `Concede +${lvl * 6}% de chance de re-rolar espécie caso a criatura já esteja no Bestiário.`
+        },
+        {
+          id: "tel_2",
+          name: "Triangulação Espectral",
+          maxLvl: 10,
+          baseCost: 12,
+          costMult: 3.1,
+          desc: (lvl) => `Amplifica a sintonização de raridade base em +${lvl * 5}%.`
+        }
+      ]
+    },
+    {
+      id: "extraction",
+      title: "RAMO II // EXTRAÇÃO",
+      subtitle: "Foco em massa, densidade biológica e rendimento",
+      nodes: [
+        {
+          id: "ext_1",
+          name: "Sintetizador de Biomassa Densa",
+          maxLvl: 15,
+          baseCost: 6,
+          costMult: 2.7,
+          desc: (lvl) => `Aumenta o valor de coleta de todas as capturas em +${lvl * 10}%.`
+        },
+        {
+          id: "ext_2",
+          name: "Preservação de Mutações",
+          maxLvl: 10,
+          baseCost: 15,
+          costMult: 3.2,
+          desc: (lvl) => `Aumenta o multiplicador de valor de espécies mutantes em +${lvl * 8}%.`
+        }
+      ]
+    },
+    {
+      id: "stability",
+      title: "RAMO III // ESTABILIDADE ESTRUTURAL",
+      subtitle: "Foco em profundidade inicial, guincho e custo de casco",
+      nodes: [
+        {
+          id: "stb_1",
+          name: "Reforço de Quilha de Carbono",
+          maxLvl: 10,
+          baseCost: 8,
+          costMult: 2.9,
+          desc: (lvl) => `Aumenta o alcance inicial e limite de casco base em +${lvl * 100}m.`
+        },
+        {
+          id: "stb_2",
+          name: "Amortecedor Hidrodinâmico",
+          maxLvl: 10,
+          baseCost: 12,
+          costMult: 3.1,
+          desc: (lvl) => `Reduz a duração do ciclo automático em ${(lvl * 2).toFixed(0)}%.`
+        }
+      ]
+    }
+  ];
+
+  // Desafios de Expedição (Prestígio)
+  const CHALLENGES = [
+    {
+      id: "ch_no_winch",
+      name: "Protocolo I: Guincho Manual-Base",
+      rule: "Proibido aprimorar Automação do Guincho Contínuo durante toda a expedição.",
+      goal: 5e6,
+      dataBonus: 0.25,
+      rarityBonus: 0.10,
+      rewardText: "+25% Dados Abissais permanentes e +10% Raridade base."
+    },
+    {
+      id: "ch_shallow",
+      name: "Protocolo II: Pressão Superficial",
+      rule: "Profundidade operacional travada na Zona Epipelágica (0m - 200m).",
+      goal: 2.5e6,
+      dataBonus: 0.30,
+      rarityBonus: 0.15,
+      rewardText: "+30% Dados Abissais permanentes e +15% Raridade base."
+    },
+    {
+      id: "ch_no_bait",
+      name: "Protocolo III: Coleta Estéril",
+      rule: "Proibido aprimorar Isca Biológica Sintética durante a expedição.",
+      goal: 1.5e7,
+      dataBonus: 0.35,
+      rarityBonus: 0.15,
+      rewardText: "+35% Dados Abissais permanentes e +15% Raridade base."
+    },
+    {
+      id: "ch_austere",
+      name: "Protocolo IV: Batisfera Austera",
+      rule: "Proibido comprar melhorias de Sonar e Isca. Limite máximo de 2 níveis em Linha/Casco.",
+      goal: 5e7,
+      dataBonus: 0.50,
+      rarityBonus: 0.25,
+      rewardText: "+50% Dados Abissais permanentes e +25% Raridade base."
+    }
+  ];
+
+  let state = {
+    currency: 0,
+    totalEarnedRun: 0,
+    totalCatches: 0,
+    selectedZone: 0,
+    prestigeCount: 0,
+    prestigeData: 0,
+    upgrades: {
+      line: 0,
+      hull: 0,
+      winch: 0,
+      bait: 0,
+      sonar: 0
+    },
+    doctrines: {
+      tel_1: 0,
+      tel_2: 0,
+      ext_1: 0,
+      ext_2: 0,
+      stb_1: 0,
+      stb_2: 0
+    },
+    activeChallenge: null,
+    queuedChallenge: null,
+    completedChallenges: {},
+    bestiary: {},
+    discoveryCounter: 0,
+    lastTick: Date.now(),
+    cycleProgress: 0
+  };
+
+  let logs = [];
+
+  function getBaseDepthBonus() {
+    return (state.doctrines.stb_1 || 0) * 100;
+  }
+
+  function getLineReach(lvl) {
+    return Math.floor((250 + getBaseDepthBonus()) * Math.pow(1.18, lvl));
+  }
+
+  function getHullLimit(lvl) {
+    return Math.floor((250 + getBaseDepthBonus()) * Math.pow(1.19, lvl));
+  }
+
+  function getMaxAllowedDepth() {
+    if (state.activeChallenge === "ch_shallow") {
+      return 200;
+    }
+    return Math.min(50000, Math.min(getLineReach(state.upgrades.line), getHullLimit(state.upgrades.hull)));
+  }
+
+  function getCycleDuration(lvl) {
+    const stbMult = 1 - ((state.doctrines.stb_2 || 0) * 0.02);
+    return Math.max(1.50, 18.0 * Math.pow(0.972, lvl) * stbMult);
+  }
+
+  function getBaitMult(lvl) {
+    return Math.pow(1.12, lvl);
+  }
+
+  function getChallengeBonuses() {
+    let dataBonus = 0;
+    let rarityBonus = 0;
+    CHALLENGES.forEach(ch => {
+      if (state.completedChallenges[ch.id]) {
+        dataBonus += ch.dataBonus;
+        rarityBonus += ch.rarityBonus;
+      }
+    });
+    return { dataBonus, rarityBonus };
+  }
+
+  function getPrestigeMult(data) {
+    return 1 + (data * 0.10);
+  }
+
+  function getZoneMilestoneMultiplier(zoneId, discoveredByZone) {
+    const found = discoveredByZone[zoneId] || 0;
+    const ratio = found / COMBINATIONS_PER_ZONE;
+    let bonus = 0;
+    ZONE_MILESTONES.forEach(m => {
+      if (ratio >= m.pct) bonus += m.bonus;
+    });
+    return 1 + bonus;
+  }
+
+  function getDiscoveredByZoneMap() {
+    const arr = new Array(ZONES.length).fill(0);
+    Object.values(state.bestiary).forEach(entry => {
+      if (typeof entry.zoneId === "number" && arr[entry.zoneId] !== undefined) {
+        arr[entry.zoneId] += 1;
+      }
+    });
+    return arr;
+  }
+
+  function getUpgradeCost(def, lvl) {
+    return def.baseCost * Math.pow(def.costGrowth, lvl);
+  }
+
+  function calculatePendingPrestige() {
+    if (state.totalEarnedRun < 1e6) return 0;
+    const base = Math.pow(state.totalEarnedRun / 1e6, 0.34);
+    const { dataBonus } = getChallengeBonuses();
+    return Math.floor(base * (1 + dataBonus));
+  }
+
+  const SUFFIX_NUM = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+  function formatNumber(n) {
+    if (!isFinite(n)) return "MAX";
+    if (n < 1000) return n % 1 === 0 ? n.toString() : n.toFixed(2);
+    const tier = Math.floor(Math.log10(Math.abs(n)) / 3);
+    if (tier < SUFFIX_NUM.length) {
+      const scaled = n / Math.pow(10, tier * 3);
+      return scaled.toFixed(2) + SUFFIX_NUM[tier];
+    }
+    return n.toExponential(2).replace("+", "");
+  }
+
+  function mulberry32(a) {
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ t >>> 15, t | 1);
+      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function hashString(str) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function rollCombinationIndices(zoneId, rngFn) {
+    const pIdx = Math.floor(rngFn() * PREFIXES.length);
+    const sIdx = Math.floor(rngFn() * SPECIES_BY_ZONE[zoneId].length);
+    const sufIdx = Math.floor(rngFn() * SUFFIXES.length);
+    const mIdx = Math.floor(rngFn() * MUTATIONS.length);
+    return { pIdx, sIdx, sufIdx, mIdx, key: `${zoneId}-${pIdx}-${sIdx}-${sufIdx}-${mIdx}` };
+  }
+
+  function generateFish(zoneId, rngFn = Math.random, discoveredByZoneCache = null) {
+    const zone = ZONES[zoneId];
+    const { rarityBonus } = getChallengeBonuses();
+    const docTel2 = (state.doctrines.tel_2 || 0) * 0.05;
+    const sonarBoost = 1 + (state.upgrades.sonar * 0.04) + rarityBonus + docTel2;
+
+    let roll = rngFn() * TOTAL_RARITY_WEIGHT;
+    roll = roll / Math.pow(sonarBoost, 0.62);
+
+    let rarity = RARITIES[0];
+    let cumulative = 0;
+    for (let i = RARITIES.length - 1; i >= 0; i--) {
+      cumulative += RARITIES[i].weight;
+      if (roll <= cumulative) {
+        rarity = RARITIES[i];
+        break;
+      }
+    }
+
+    let combo = rollCombinationIndices(zoneId, rngFn);
+    // Doutrina de Telemetria I: chance de re-rolar se já estiver no bestiário
+    const rerollChance = Math.min(0.60, (state.doctrines.tel_1 || 0) * 0.06);
+    if (rerollChance > 0 && state.bestiary[combo.key] && rngFn() < rerollChance) {
+      combo = rollCombinationIndices(zoneId, rngFn);
+    }
+
+    const { pIdx, sIdx, sufIdx, mIdx, key: speciesKey } = combo;
+    const prefix = PREFIXES[pIdx];
+    const baseSpecies = SPECIES_BY_ZONE[zoneId][sIdx];
+    const suffix = SUFFIXES[sufIdx];
+    const mutation = MUTATIONS[mIdx];
+
+    const fullName = `${baseSpecies} ${prefix} ${suffix}`;
+    const depth = Math.floor(zone.min + rngFn() * (zone.max - zone.min));
+
+    const sizeFactor = 0.7 + rngFn() * 0.9 + (rarity.id * 0.22);
+    const lengthCm = (12 + zoneId * 28) * sizeFactor * (mIdx === 2 ? 1.8 : 1.0);
+    const weightKg = Math.pow(lengthCm / 15, 2.45) * (0.4 + zoneId * 0.35);
+
+    const discMap = discoveredByZoneCache || getDiscoveredByZoneMap();
+    const milestoneMult = getZoneMilestoneMultiplier(zoneId, discMap);
+    const docExt1Mult = 1 + ((state.doctrines.ext_1 || 0) * 0.10);
+    const docExt2Mult = mIdx > 0 ? (1 + ((state.doctrines.ext_2 || 0) * 0.08)) : 1;
+
+    const baseVal = 1.8 * zone.mult * rarity.mult * mutation.mult * (0.85 + rngFn() * 0.3);
+    const finalValue = baseVal * getBaitMult(state.upgrades.bait) * getPrestigeMult(state.prestigeData) * milestoneMult * docExt1Mult * docExt2Mult;
+
+    return {
+      key: speciesKey,
+      name: fullName,
+      mutationId: mIdx,
+      mutationName: mutation.name,
+      zoneId: zoneId,
+      zoneName: zone.name,
+      depth: depth,
+      rarity: rarity,
+      lengthCm: lengthCm,
+      weightKg: weightKg,
+      value: finalValue,
+      seed: hashString(speciesKey)
+    };
+  }
+
+  function buildFishSVG(fish, width = 220, height = 140) {
+    const rand = mulberry32(fish.seed);
+    const strokeColor = fish.silhouette
+      ? "#2c4257"
+      : (getComputedStyle(document.documentElement).getPropertyValue(`--${fish.rarity.css}`).trim() || "#38bdf8");
+
+    const cx = width * 0.52;
+    const cy = height * 0.5;
+    const bodyLen = (48 + rand() * 48) * (width / 220);
+    const bodyHeight = (16 + rand() * 28) * (height / 140);
+    const noseX = cx + bodyLen * 0.55;
+    const tailX = cx - bodyLen * 0.55;
+
+    const ctrlTopY = cy - bodyHeight * (0.8 + rand() * 0.6);
+    const ctrlBotY = cy + bodyHeight * (0.8 + rand() * 0.6);
+    const bodyPath = `M ${noseX.toFixed(1)} ${cy.toFixed(1)} 
+                      Q ${cx.toFixed(1)} ${ctrlTopY.toFixed(1)} ${tailX.toFixed(1)} ${cy.toFixed(1)} 
+                      Q ${cx.toFixed(1)} ${ctrlBotY.toFixed(1)} ${noseX.toFixed(1)} ${cy.toFixed(1)} Z`;
+
+    const tailSpan = (12 + rand() * 18) * (height / 140);
+    const tailLen = (16 + rand() * 16) * (width / 220);
+    const tailPath = `M ${tailX.toFixed(1)} ${cy.toFixed(1)} 
+                      L ${(tailX - tailLen).toFixed(1)} ${(cy - tailSpan).toFixed(1)} 
+                      L ${(tailX - tailLen * 0.65).toFixed(1)} ${cy.toFixed(1)} 
+                      L ${(tailX - tailLen).toFixed(1)} ${(cy + tailSpan).toFixed(1)} Z`;
+
+    let spinesSvg = "";
+    const rarityLvl = fish.rarity ? fish.rarity.id : 1;
+    const spineCount = 2 + Math.floor(rand() * 5) + Math.floor(rarityLvl / 2);
+    for (let i = 0; i < spineCount; i++) {
+      const t = 0.25 + (i / spineCount) * 0.5;
+      const sx = tailX + (noseX - tailX) * t;
+      const syTop = cy - bodyHeight * 0.45;
+      const syBot = cy + bodyHeight * 0.45;
+      const sLen = 8 + rand() * 14;
+      spinesSvg += `<line x1="${sx.toFixed(1)}" y1="${syTop.toFixed(1)}" x2="${(sx - 5).toFixed(1)}" y2="${(syTop - sLen).toFixed(1)}" stroke="${strokeColor}" stroke-width="1.1"/>`;
+      if (rand() > 0.45) {
+        spinesSvg += `<line x1="${sx.toFixed(1)}" y1="${syBot.toFixed(1)}" x2="${(sx - 5).toFixed(1)}" y2="${(syBot + sLen * 0.8).toFixed(1)}" stroke="${strokeColor}" stroke-width="1.1"/>`;
+      }
+    }
+
+    let eyesSvg = "";
+    const eyeCount = rand() < 0.2 ? 0 : (rand() < 0.8 ? 1 : 2 + Math.floor(rand() * 2));
+    for (let e = 0; e < eyeCount; e++) {
+      const ex = noseX - bodyLen * (0.2 + e * 0.09);
+      const ey = cy - bodyHeight * (0.12 - e * 0.08);
+      const er = 2.2 + rand() * 2.5;
+      eyesSvg += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="${er.toFixed(1)}" stroke="${strokeColor}" stroke-width="1.2" fill="#05080b"/>`;
+      eyesSvg += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="0.8" fill="${strokeColor}"/>`;
+    }
+
+    let lureSvg = "";
+    if (fish.zoneId >= 1 || rand() > 0.55) {
+      const lx1 = noseX - 4;
+      const ly1 = cy - bodyHeight * 0.2;
+      const lx2 = noseX + 12 + rand() * 10;
+      const ly2 = cy - bodyHeight * 0.6 - rand() * 10;
+      lureSvg = `<polyline points="${lx1.toFixed(1)},${ly1.toFixed(1)} ${(lx1 + 6).toFixed(1)},${(ly2 - 4).toFixed(1)} ${lx2.toFixed(1)},${ly2.toFixed(1)}" fill="none" stroke="${strokeColor}" stroke-width="1"/>
+                 <circle cx="${lx2.toFixed(1)}" cy="${ly2.toFixed(1)}" r="2" fill="${strokeColor}"/>`;
+    }
+
+    const ribX1 = cx - bodyLen * 0.15;
+    const ribX2 = cx + bodyLen * 0.15;
+    const internalLines = `<line x1="${ribX1.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${ribX2.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="2 2"/>`;
+
+    return `
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <line x1="12" y1="${cy}" x2="${width - 12}" y2="${cy}" stroke="#141e28" stroke-width="1"/>
+        <line x1="${cx}" y1="10" x2="${cx}" y2="${height - 10}" stroke="#141e28" stroke-width="1"/>
+        ${spinesSvg}
+        <path d="${tailPath}" fill="#0a1219" stroke="${strokeColor}" stroke-width="1.3" ${fish.silhouette ? 'stroke-dasharray="3 2"' : ''}/>
+        <path d="${bodyPath}" fill="#080e14" stroke="${strokeColor}" stroke-width="1.5" ${fish.silhouette ? 'stroke-dasharray="3 2"' : ''}/>
+        ${internalLines}
+        ${lureSvg}
+        ${eyesSvg}
+      </svg>
+    `;
+  }
+
+  function performCatch() {
+    const fish = generateFish(state.selectedZone);
+    state.currency += fish.value;
+    state.totalEarnedRun += fish.value;
+    state.totalCatches += 1;
+
+    const isNew = !state.bestiary[fish.key];
+    if (isNew) {
+      state.discoveryCounter += 1;
+      state.bestiary[fish.key] = {
+        count: 1,
+        discoveredOrder: state.discoveryCounter,
+        maxWeight: fish.weightKg,
+        maxLength: fish.lengthCm,
+        rarityId: fish.rarity.id,
+        zoneId: fish.zoneId,
+        mutationId: fish.mutationId,
+        name: fish.name,
+        mutationName: fish.mutationName,
+        seed: fish.seed
+      };
+    } else {
+      const entry = state.bestiary[fish.key];
+      entry.count += 1;
+      if (fish.weightKg > entry.maxWeight) entry.maxWeight = fish.weightKg;
+      if (fish.lengthCm > entry.maxLength) entry.maxLength = fish.lengthCm;
+    }
+
+    updateSpecimenDisplay(fish, isNew, state.bestiary[fish.key].count);
+    addLog(fish, isNew, state.bestiary[fish.key].count);
+  }
+
+  function updateSpecimenDisplay(fish, isNew, catchCount) {
+    const badge = document.getElementById("specimenRarityBadge");
+    badge.textContent = `${fish.rarity.name.toUpperCase()}${isNew ? " [NOVA ESPÉCIE]" : ""}`;
+    badge.className = fish.rarity.css;
+
+    document.getElementById("specimenCodeTag").textContent = `TAXON: ${fish.key}`;
+    document.getElementById("specimenZoneTag").textContent = `${fish.depth.toLocaleString("pt-BR")} m // ${fish.zoneName}`;
+    document.getElementById("specimenSvgContainer").innerHTML = buildFishSVG(fish, 240, 150);
+
+    const nameEl = document.getElementById("specimenName");
+    nameEl.textContent = `${fish.name} [x${formatNumber(catchCount)}]`;
+    nameEl.className = `specimen-title ${fish.rarity.css}`;
+
+    document.getElementById("specimenDesc").textContent = `${fish.mutationName} — Extraído a ${fish.depth.toLocaleString("pt-BR")}m de profundidade.`;
+    document.getElementById("specimenWeight").textContent = `${formatNumber(fish.weightKg)} kg`;
+    document.getElementById("specimenLength").textContent = `${formatNumber(fish.lengthCm)} cm`;
+    document.getElementById("specimenValue").textContent = `+${formatNumber(fish.value)}`;
+  }
+
+  function addLog(fish, isNew, catchCount) {
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 8);
+    logs.unshift({
+      time: timeStr,
+      name: fish.name,
+      count: catchCount,
+      rarity: fish.rarity,
+      value: fish.value,
+      depth: fish.depth,
+      isNew: isNew
+    });
+    if (logs.length > 45) logs.pop();
+
+    const feed = document.getElementById("logFeed");
+    feed.innerHTML = logs.map(item => `
+      <div class="log-entry">
+        <div>
+          <span class="log-time">[${item.time}]</span>
+          <span class="${item.rarity.css}">${item.name}</span>
+          <span style="color:var(--text-bright); font-size:11px;">[x${formatNumber(item.count)}]</span>
+          ${item.isNew ? '<span style="color:var(--accent-teal); font-size:10px;">[NOVO]</span>' : ''}
+          <span class="mono-note">(${item.depth}m)</span>
+        </div>
+        <div style="color:var(--text-bright); white-space:nowrap;">+${formatNumber(item.value)}</div>
+      </div>
+    `).join("");
+  }
+
+  function processOfflineProgress(elapsedSeconds) {
+    if (elapsedSeconds < 5) return;
+    const cycleDur = getCycleDuration(state.upgrades.winch);
+    const totalCatches = Math.floor(elapsedSeconds / cycleDur);
+    if (totalCatches <= 0) return;
+
+    const exactSamples = Math.min(totalCatches, 2500);
+    let sampleGain = 0;
+    let newSpeciesCount = 0;
+    const discMap = getDiscoveredByZoneMap();
+
+    for (let i = 0; i < exactSamples; i++) {
+      const fish = generateFish(state.selectedZone, Math.random, discMap);
+      sampleGain += fish.value;
+      if (!state.bestiary[fish.key]) {
+        newSpeciesCount++;
+        state.discoveryCounter += 1;
+        discMap[fish.zoneId] += 1;
+        state.bestiary[fish.key] = {
+          count: 1,
+          discoveredOrder: state.discoveryCounter,
+          maxWeight: fish.weightKg,
+          maxLength: fish.lengthCm,
+          rarityId: fish.rarity.id,
+          zoneId: fish.zoneId,
+          mutationId: fish.mutationId,
+          name: fish.name,
+          mutationName: fish.mutationName,
+          seed: fish.seed
+        };
+      } else {
+        state.bestiary[fish.key].count += 1;
+      }
+    }
+
+    const scaleRatio = totalCatches / exactSamples;
+    const totalGain = sampleGain * scaleRatio;
+
+    state.currency += totalGain;
+    state.totalEarnedRun += totalGain;
+    state.totalCatches += totalCatches;
+
+    const banner = document.getElementById("offlineBanner");
+    const summary = document.getElementById("offlineSummary");
+    banner.style.display = "flex";
+    summary.textContent = `Tempo ausente: ${formatDuration(elapsedSeconds)} | Capturas autônomas: ${formatNumber(totalCatches)} | Créditos coletados: +${formatNumber(totalGain)} | Novas espécies catalogadas: ${newSpeciesCount}`;
+  }
+
+  function dismissOffline() {
+    document.getElementById("offlineBanner").style.display = "none";
+  }
+
+  function formatDuration(sec) {
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60);
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }
+
+  function isUpgradeBlockedByChallenge(id) {
+    const ch = state.activeChallenge;
+    if (!ch) return false;
+    if (ch === "ch_no_winch" && id === "winch") return true;
+    if (ch === "ch_no_bait" && id === "bait") return true;
+    if (ch === "ch_austere") {
+      if (id === "sonar" || id === "bait") return true;
+      if ((id === "line" || id === "hull") && state.upgrades[id] >= 2) return true;
+    }
+    return false;
+  }
+
+  function buyUpgrade(id) {
+    if (isUpgradeBlockedByChallenge(id)) return;
+    const def = UPGRADE_DEFS.find(u => u.id === id);
+    if (!def) return;
+    const lvl = state.upgrades[id];
+    const cost = getUpgradeCost(def, lvl);
+    if (state.currency >= cost) {
+      state.currency -= cost;
+      state.upgrades[id] += 1;
+      saveGame();
+      updateUI();
+    }
+  }
+  window.buyUpgrade = buyUpgrade;
+
+  function buyDoctrine(nodeId) {
+    let foundNode = null;
+    for (const branch of DOCTRINE_BRANCHES) {
+      const n = branch.nodes.find(x => x.id === nodeId);
+      if (n) { foundNode = n; break; }
+    }
+    if (!foundNode) return;
+    const curLvl = state.doctrines[nodeId] || 0;
+    if (curLvl >= foundNode.maxLvl) return;
+    const cost = Math.floor(foundNode.baseCost * Math.pow(foundNode.costMult, curLvl));
+    if (state.prestigeData >= cost) {
+      state.prestigeData -= cost;
+      state.doctrines[nodeId] = curLvl + 1;
+      saveGame();
+      updateUI();
+    }
+  }
+  window.buyDoctrine = buyDoctrine;
+
+  function selectZone(zoneId) {
+    const zone = ZONES[zoneId];
+    if (getMaxAllowedDepth() >= zone.reqDepth) {
+      state.selectedZone = zoneId;
+      saveGame();
+      updateUI();
+    }
+  }
+  window.selectZone = selectZone;
+
+  function toggleQueueChallenge(chId) {
+    if (state.queuedChallenge === chId) {
+      state.queuedChallenge = null;
+    } else {
+      state.queuedChallenge = chId;
+    }
+    updateUI();
+  }
+  window.toggleQueueChallenge = toggleQueueChallenge;
+
+  function abortChallenge() {
+    state.activeChallenge = null;
+    saveGame();
+    updateUI();
+  }
+  window.abortChallenge = abortChallenge;
+
+  function triggerPrestige() {
+    const pending = calculatePendingPrestige();
+    if (pending <= 0) return;
+
+    if (state.activeChallenge) {
+      const chObj = CHALLENGES.find(c => c.id === state.activeChallenge);
+      if (chObj && state.totalEarnedRun >= chObj.goal) {
+        state.completedChallenges[chObj.id] = true;
+      }
+    }
+
+    state.prestigeData += pending;
+    state.prestigeCount += 1;
+    state.currency = 0;
+    state.totalEarnedRun = 0;
+    state.selectedZone = 0;
+    state.cycleProgress = 0;
+    state.upgrades = { line: 0, hull: 0, winch: 0, bait: 0, sonar: 0 };
+
+    state.activeChallenge = state.queuedChallenge || null;
+    state.queuedChallenge = null;
+
+    saveGame();
+    updateUI();
+    switchTab("sonar");
+  }
+  window.triggerPrestige = triggerPrestige;
+
+  function updateUI() {
+    const maxDepth = getMaxAllowedDepth();
+    const currentZone = ZONES[state.selectedZone];
+
+    document.getElementById("hudCurrency").textContent = formatNumber(state.currency);
+    document.getElementById("hudDepth").textContent = `${currentZone.min.toLocaleString("pt-BR")} - ${Math.min(currentZone.max, maxDepth).toLocaleString("pt-BR")} m`;
+    document.getElementById("hudPrestige").textContent = `${formatNumber(state.prestigeData)} (x${getPrestigeMult(state.prestigeData).toFixed(2)})`;
+    document.getElementById("maxDepthInfo").textContent = `LIMITE OPERACIONAL: ${maxDepth.toLocaleString("pt-BR")} m`;
+    document.getElementById("totalCatchesLabel").textContent = `CAPTURAS: ${formatNumber(state.totalCatches)}`;
+    document.getElementById("upgCurrencyDisplay").textContent = formatNumber(state.currency);
+    document.getElementById("docDataDisplay").textContent = formatNumber(state.prestigeData);
+
+    // Banner de desafio ativo
+    const chBanner = document.getElementById("activeChallengeBanner");
+    if (state.activeChallenge) {
+      const chObj = CHALLENGES.find(c => c.id === state.activeChallenge);
+      if (chObj) {
+        chBanner.style.display = "flex";
+        document.getElementById("activeChallengeTitle").textContent = `DESAFIO ATIVO: ${chObj.name}`;
+        document.getElementById("activeChallengeDesc").textContent = `${chObj.rule} | Meta de Biomassa: ${formatNumber(state.totalEarnedRun)} / ${formatNumber(chObj.goal)}`;
+      }
+    } else {
+      chBanner.style.display = "none";
+    }
+
+    // Zonas e Marcos de Catalogação
+    const discoveredByZone = getDiscoveredByZoneMap();
+    const zoneGrid = document.getElementById("zoneGrid");
+    zoneGrid.innerHTML = ZONES.map(z => {
+      const unlocked = maxDepth >= z.reqDepth;
+      const selected = state.selectedZone === z.id;
+      const foundInZone = discoveredByZone[z.id];
+      const ratio = foundInZone / COMBINATIONS_PER_ZONE;
+      const zonePct = (ratio * 100).toFixed(2);
+      const milestoneMult = getZoneMilestoneMultiplier(z.id, discoveredByZone);
+
+      const pillsHtml = ZONE_MILESTONES.map(m => {
+        const hit = ratio >= m.pct;
+        return `<span class="m-pill ${hit ? 'unlocked' : ''}">${m.label}</span>`;
+      }).join("");
+
+      return `
+        <div class="zone-card ${selected ? 'selected' : ''} ${unlocked ? '' : 'locked'}" onclick="selectZone(${z.id})">
+          <div style="display:flex; justify-content:space-between; font-size:11px;">
+            <strong style="color:${selected ? 'var(--accent-cyan)' : 'var(--text-bright)'};">${z.name}</strong>
+          </div>
+          <div class="mono-note">${z.min.toLocaleString("pt-BR")}m – ${z.max.toLocaleString("pt-BR")}m</div>
+          <div class="mono-note" style="color:var(--text-main);">
+            Catalogados: ${foundInZone.toLocaleString("pt-BR")} / ${COMBINATIONS_PER_ZONE.toLocaleString("pt-BR")} (${zonePct}%)
+          </div>
+          <div class="milestone-pills">${pillsHtml}</div>
+          <div class="mono-note" style="color:${unlocked ? 'var(--accent-teal)' : 'var(--text-muted)'};">
+            ${unlocked ? `Biomassa: x${formatNumber(z.mult)} (Marco: x${milestoneMult.toFixed(2)})` : `Requer ${z.reqDepth.toLocaleString("pt-BR")}m`}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // Upgrades de Engenharia
+    const upgContainer = document.getElementById("upgradesContainer");
+    upgContainer.innerHTML = UPGRADE_DEFS.map(def => {
+      const lvl = state.upgrades[def.id];
+      const cost = getUpgradeCost(def, lvl);
+      const blocked = isUpgradeBlockedByChallenge(def.id);
+      const canBuy = !blocked && state.currency >= cost;
+      return `
+        <div class="upgrade-item">
+          <div class="upgrade-desc">
+            <div class="upgrade-title">${def.name} <span style="color:var(--accent-cyan);">[Nv. ${lvl}]</span></div>
+            <div class="upgrade-sub">${def.desc(lvl)}</div>
+          </div>
+          <button class="btn" ${canBuy ? '' : 'disabled'} onclick="buyUpgrade('${def.id}')">
+            ${blocked ? "BLOQUEADO PELO DESAFIO" : `APRIMORAR // ${formatNumber(cost)}`}
+          </button>
+        </div>
+      `;
+    }).join("");
+
+    // Doutrinas da Sonda
+    const docContainer = document.getElementById("doctrinesContainer");
+    docContainer.innerHTML = DOCTRINE_BRANCHES.map(branch => {
+      const nodesHtml = branch.nodes.map(node => {
+        const curLvl = state.doctrines[node.id] || 0;
+        const isMax = curLvl >= node.maxLvl;
+        const cost = Math.floor(node.baseCost * Math.pow(node.costMult, curLvl));
+        const canBuy = !isMax && state.prestigeData >= cost;
+        return `
+          <div class="doctrine-node ${isMax ? 'maxed' : ''}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="color:var(--text-bright); font-size:12px;">${node.name}</strong>
+              <span style="color:var(--accent-cyan); font-size:11px;">[${curLvl}/${node.maxLvl}]</span>
+            </div>
+            <div class="mono-note">${node.desc(curLvl)}</div>
+            <button class="btn" ${canBuy ? '' : 'disabled'} onclick="buyDoctrine('${node.id}')">
+              ${isMax ? "PESQUISA CONCLUÍDA" : `PESQUISAR // ${formatNumber(cost)} DADOS`}
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <div class="doctrine-branch">
+          <div>
+            <strong style="color:var(--accent-teal); font-size:12px;">${branch.title}</strong>
+            <div class="mono-note">${branch.subtitle}</div>
+          </div>
+          ${nodesHtml}
+        </div>
+      `;
+    }).join("");
+
+    // Estatísticas do Bestiário
+    const discoveredCount = Object.keys(state.bestiary).length;
+    const pct = ((discoveredCount / TOTAL_COMBINATIONS) * 100).toFixed(4);
+    document.getElementById("navCatalogPct").textContent = `${pct}%`;
+    document.getElementById("catalogStatsLabel").textContent = `${discoveredCount.toLocaleString("pt-BR")} / ${TOTAL_COMBINATIONS.toLocaleString("pt-BR")} ESPÉCIES CATALOGADAS (${pct}%)`;
+
+    // Prestígio & Desafios
+    const pending = calculatePendingPrestige();
+    const { dataBonus, rarityBonus } = getChallengeBonuses();
+    document.getElementById("prestigeCountLabel").textContent = state.prestigeCount;
+    document.getElementById("currentPrestigeData").textContent = formatNumber(state.prestigeData);
+    document.getElementById("currentPrestigeMult").textContent = `Multiplicador Global Atual: x${getPrestigeMult(state.prestigeData).toFixed(2)}`;
+    document.getElementById("pendingPrestigeData").textContent = `+${formatNumber(pending)}`;
+    document.getElementById("pendingPrestigeMult").textContent = `Novo Multiplicador Global: x${getPrestigeMult(state.prestigeData + pending).toFixed(2)}`;
+    document.getElementById("challengeBonusSummary").textContent = `BÔNUS DE DESAFIOS: +${(dataBonus * 100).toFixed(0)}% DADOS | +${(rarityBonus * 100).toFixed(0)}% RARIDADE`;
+
+    const chGrid = document.getElementById("challengesGrid");
+    chGrid.innerHTML = CHALLENGES.map(ch => {
+      const done = !!state.completedChallenges[ch.id];
+      const queued = state.queuedChallenge === ch.id;
+      return `
+        <div class="challenge-card ${queued ? 'selected-challenge' : ''} ${done ? 'completed-challenge' : ''}">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="color:${done ? 'var(--accent-teal)' : 'var(--text-bright)'};">${ch.name}</strong>
+              <span style="font-size:10px; color:${done ? 'var(--accent-teal)' : 'var(--text-muted)'};">${done ? "[CONCLUÍDO]" : `META: ${formatNumber(ch.goal)}`}</span>
+            </div>
+            <div class="mono-note" style="margin-top:4px; color:var(--text-main);">${ch.rule}</div>
+            <div class="mono-note" style="margin-top:4px; color:var(--accent-cyan);">Recompensa: ${ch.rewardText}</div>
+          </div>
+          <button class="btn ${queued ? 'btn-amber' : ''}" onclick="toggleQueueChallenge('${ch.id}')">
+            ${queued ? "PROTOCOLO AGENDADO (CLIQUE P/ CANCELAR)" : "AGENDAR PARA PRÓXIMA EXPEDIÇÃO"}
+          </button>
+        </div>
+      `;
+    }).join("");
+
+    const btnPrestige = document.getElementById("btnPrestige");
+    const btnLabel = document.getElementById("btnPrestigeLabel");
+    if (state.activeChallenge) {
+      const activeChObj = CHALLENGES.find(c => c.id === state.activeChallenge);
+      const goalMet = activeChObj && state.totalEarnedRun >= activeChObj.goal;
+      btnPrestige.disabled = !goalMet && pending <= 0;
+      btnLabel.textContent = goalMet ? "CONCLUIR DESAFIO & RETORNAR À SUPERFÍCIE" : "INICIAR NOVA EXPEDIÇÃO (DESAFIO INCOMPLETO)";
+    } else {
+      btnPrestige.disabled = pending <= 0;
+      btnLabel.textContent = state.queuedChallenge ? "INICIAR EXPEDIÇÃO COM PROTOCOLO RESTRITIVO" : "INICIAR NOVA EXPEDIÇÃO";
+    }
+  }
+
+  function renderBestiary() {
+    const discFilter = document.getElementById("filterDiscovery").value;
+    const zFilter = document.getElementById("filterZone").value;
+    const rFilter = document.getElementById("filterRarity").value;
+    const mFilter = document.getElementById("filterMutation").value;
+    const sortMode = document.getElementById("filterSort").value;
+    const search = document.getElementById("filterSearch").value.toLowerCase().trim();
+
+    const grid = document.getElementById("bestiaryGrid");
+    const infoNote = document.getElementById("bestiaryInfoNote");
+
+    if (discFilter === "undiscovered") {
+      const targetZones = zFilter === "all" ? [state.selectedZone] : [Number(zFilter)];
+      const mutList = mFilter === "all" ? [0, 1, 2, 3] : [Number(mFilter)];
+      const missingSamples = [];
+
+      outerLoop:
+      for (const zId of targetZones) {
+        const zone = ZONES[zId];
+        for (let sIdx = 0; sIdx < SPECIES_BY_ZONE[zId].length; sIdx++) {
+          for (let pIdx = 0; pIdx < PREFIXES.length; pIdx++) {
+            for (let sufIdx = 0; sufIdx < SUFFIXES.length; sufIdx++) {
+              for (const mIdx of mutList) {
+                const key = `${zId}-${pIdx}-${sIdx}-${sufIdx}-${mIdx}`;
+                if (!state.bestiary[key]) {
+                  const fullName = `${SPECIES_BY_ZONE[zId][sIdx]} ${PREFIXES[pIdx]} ${SUFFIXES[sufIdx]}`;
+                  if (search && !fullName.toLowerCase().includes(search)) continue;
+                  missingSamples.push({
+                    key,
+                    name: fullName,
+                    zoneId: zId,
+                    zoneName: zone.name,
+                    mutationName: MUTATIONS[mIdx].name,
+                    seed: hashString(key)
+                  });
+                  if (missingSamples.length >= 90) break outerLoop;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      infoNote.textContent = zFilter === "all"
+        ? `Exibindo até 90 espécimes não catalogados da profundidade ativa (${ZONES[state.selectedZone].name}). Selecione outra profundidade no filtro para inspecionar.`
+        : `Exibindo até 90 espécimes ainda não catalogados em ${ZONES[Number(zFilter)].name}.`;
+
+      if (missingSamples.length === 0) {
+        grid.innerHTML = `<div class="mono-note" style="padding:12px;">Nenhuma espécie pendente encontrada para este filtro.</div>`;
+        return;
+      }
+
+      grid.innerHTML = missingSamples.map(item => {
+        const mockFish = { seed: item.seed, zoneId: item.zoneId, silhouette: true };
+        return `
+          <div class="bestiary-card undiscovered">
+            <div style="display:flex; justify-content:space-between; font-size:10px;">
+              <span style="color:var(--text-muted);">NÃO CATALOGADO</span>
+              <span class="mono-note">[x0]</span>
+            </div>
+            <div style="background:var(--bg-void); border:1px solid var(--border-dim); display:flex; justify-content:center;">
+              ${buildFishSVG(mockFish, 180, 90)}
+            </div>
+            <div style="font-weight:600; color:var(--text-muted); font-size:12px;">${item.name} [x0]</div>
+            <div class="mono-note">${item.mutationName}</div>
+            <div class="mono-note">${item.zoneName} | Silhueta de Sonar</div>
+          </div>
+        `;
+      }).join("");
+      return;
+    }
+
+    infoNote.textContent = "Exibindo até 120 espécimes catalogados conforme os critérios selecionados.";
+
+    const entries = Object.entries(state.bestiary).filter(([key, item]) => {
+      if (zFilter !== "all" && item.zoneId !== Number(zFilter)) return false;
+      if (rFilter !== "all" && item.rarityId !== Number(rFilter)) return false;
+      const itemMutId = typeof item.mutationId === "number"
+        ? item.mutationId
+        : MUTATIONS.findIndex(m => m.name === item.mutationName);
+      if (mFilter !== "all" && itemMutId !== Number(mFilter)) return false;
+      if (search && !item.name.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    entries.sort((a, b) => {
+      if (sortMode === "order_asc") return (a[1].discoveredOrder || 0) - (b[1].discoveredOrder || 0);
+      if (sortMode === "order_desc") return (b[1].discoveredOrder || 0) - (a[1].discoveredOrder || 0);
+      if (sortMode === "count_desc") return b[1].count - a[1].count;
+      if (sortMode === "zone_desc") return b[1].zoneId - a[1].zoneId || b[1].rarityId - a[1].rarityId;
+      return b[1].rarityId - a[1].rarityId || b[1].zoneId - a[1].zoneId;
+    });
+
+    if (entries.length === 0) {
+      grid.innerHTML = `<div class="mono-note" style="padding:12px;">Nenhuma espécie catalogada corresponde aos filtros selecionados.</div>`;
+      return;
+    }
+
+    grid.innerHTML = entries.slice(0, 120).map(([key, item]) => {
+      const rarity = RARITIES[item.rarityId];
+      const zone = ZONES[item.zoneId];
+      const mockFish = { seed: item.seed, rarity: rarity, zoneId: item.zoneId };
+      const orderTag = item.discoveredOrder ? `#${item.discoveredOrder}` : "";
+      return `
+        <div class="bestiary-card">
+          <div style="display:flex; justify-content:space-between; font-size:10px;">
+            <span class="${rarity.css}">${rarity.name.toUpperCase()}</span>
+            <span class="mono-note">${orderTag}</span>
+          </div>
+          <div style="background:var(--bg-void); border:1px solid var(--border-dim); display:flex; justify-content:center;">
+            ${buildFishSVG(mockFish, 180, 90)}
+          </div>
+          <div style="font-weight:600; color:var(--text-bright); font-size:12px;">${item.name} <span style="color:var(--accent-cyan);">[x${formatNumber(item.count)}]</span></div>
+          <div class="mono-note">${item.mutationName}</div>
+          <div class="mono-note">${zone.name} | Máx: ${formatNumber(item.maxWeight)}kg / ${formatNumber(item.maxLength)}cm</div>
+        </div>
+      `;
+    }).join("");
+  }
+  window.renderBestiary = renderBestiary;
+
+  function switchTab(tabName) {
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tab === tabName);
+    });
+    document.querySelectorAll(".tab-panel").forEach(panel => {
+      panel.classList.toggle("active", panel.id === `tab-${tabName}`);
+    });
+    if (tabName === "bestiary") { updateFilterZoneCounts(); renderBestiary(); }
+    updateUI();
+  }
+  window.switchTab = switchTab;
+  window.dismissOffline = dismissOffline;
+
+  function saveGame() {
+    state.lastTick = Date.now();
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Falha ao gravar save local:", e);
+    }
+  }
+
+  function loadGame() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        state = Object.assign({}, state, parsed);
+        state.upgrades = Object.assign({ line: 0, hull: 0, winch: 0, bait: 0, sonar: 0 }, parsed.upgrades || {});
+        state.doctrines = Object.assign({ tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 }, parsed.doctrines || {});
+        state.completedChallenges = parsed.completedChallenges || {};
+        state.bestiary = parsed.bestiary || {};
+        if (!state.discoveryCounter) {
+          state.discoveryCounter = Object.keys(state.bestiary).length;
+        }
+        const now = Date.now();
+        const elapsedSec = Math.max(0, (now - (state.lastTick || now)) / 1000);
+        processOfflineProgress(elapsedSec);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar save:", e);
+    }
+  }
+
+  function exportSave() {
+    saveGame();
+    const jsonStr = JSON.stringify(state);
+    const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+    const box = document.getElementById("saveStringBox");
+    box.value = b64;
+    box.select();
+    document.getElementById("saveStatusLabel").textContent = "SAVE EXPORTADO EM BASE64";
+  }
+  window.exportSave = exportSave;
+
+  function importSave() {
+    const box = document.getElementById("saveStringBox");
+    const b64 = box.value.trim();
+    if (!b64) return;
+    try {
+      const jsonStr = decodeURIComponent(escape(atob(b64)));
+      const parsed = JSON.parse(jsonStr);
+      if (typeof parsed.currency === "number" && parsed.upgrades) {
+        state = Object.assign({}, state, parsed);
+        state.doctrines = Object.assign({ tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 }, parsed.doctrines || {});
+        state.completedChallenges = parsed.completedChallenges || {};
+        state.lastTick = Date.now();
+        saveGame();
+        updateUI();
+        renderBestiary();
+        document.getElementById("saveStatusLabel").textContent = "SAVE IMPORTADO COM SUCESSO";
+      }
+    } catch (e) {
+      document.getElementById("saveStatusLabel").textContent = "ERRO: CÓDIGO BASE64 INVÁLIDO";
+    }
+  }
+  window.importSave = importSave;
+
+  function hardReset() {
+    if (confirm("Confirmar exclusão permanente de todo o progresso e bestiário?")) {
+      localStorage.removeItem(SAVE_KEY);
+      location.reload();
+    }
+  }
+  window.hardReset = hardReset;
+
+  function updateFilterZoneCounts() {
+    const discoveredByZone = getDiscoveredByZoneMap();
+    const fZone = document.getElementById("filterZone");
+    Array.from(fZone.options).forEach(opt => {
+      if (opt.value !== "all") {
+        const z = ZONES[Number(opt.value)];
+        const found = discoveredByZone[z.id];
+        opt.textContent = `${z.name} (${z.min.toLocaleString("pt-BR")}m - ${z.max.toLocaleString("pt-BR")}m) — ${found.toLocaleString("pt-BR")}/${COMBINATIONS_PER_ZONE.toLocaleString("pt-BR")}`;
+      }
+    });
+  }
+
+  function initFilters() {
+    const fZone = document.getElementById("filterZone");
+    ZONES.forEach(z => {
+      const opt = document.createElement("option");
+      opt.value = z.id;
+      opt.textContent = `${z.name} (${z.min.toLocaleString("pt-BR")}m - ${z.max.toLocaleString("pt-BR")}m) — 0/${COMBINATIONS_PER_ZONE.toLocaleString("pt-BR")}`;
+      fZone.appendChild(opt);
+    });
+
+    const fRarity = document.getElementById("filterRarity");
+    RARITIES.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r.id;
+      opt.textContent = r.name;
+      fRarity.appendChild(opt);
+    });
+
+    document.getElementById("combCountTag").textContent = `${TOTAL_COMBINATIONS.toLocaleString("pt-BR")} ESPÉCIES CATALOGÁVEIS`;
+  }
+
+  let lastFrame = Date.now();
+  function gameLoop() {
+    const now = Date.now();
+    const dt = (now - lastFrame) / 1000;
+    lastFrame = now;
+
+    const cycleDur = getCycleDuration(state.upgrades.winch);
+    state.cycleProgress += dt;
+
+    if (state.cycleProgress >= cycleDur) {
+      const catches = Math.floor(state.cycleProgress / cycleDur);
+      state.cycleProgress %= cycleDur;
+      for (let i = 0; i < Math.min(catches, 10); i++) {
+        performCatch();
+      }
+      updateUI();
+    }
+
+    const pct = Math.min(100, (state.cycleProgress / cycleDur) * 100);
+    document.getElementById("cycleProgressFill").style.width = `${pct.toFixed(1)}%`;
+    document.getElementById("cycleTimerLabel").textContent = `${state.cycleProgress.toFixed(1)}s / ${cycleDur.toFixed(1)}s`;
+  }
+
+  initFilters();
+  loadGame();
+  updateUI();
+  setInterval(gameLoop, 250);
+  setInterval(saveGame, 15000);
+  window.addEventListener("beforeunload", saveGame);
+})();
+</script>
+</body>
+</html>
