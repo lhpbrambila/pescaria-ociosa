@@ -543,6 +543,7 @@
     color: var(--text-muted);
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -728,7 +729,13 @@
     <div class="box">
       <div class="box-header">
         <span>CATÁLOGO TAXONÔMICO ABISSAL</span>
-        <span id="catalogStatsLabel">0 / 256.000 ESPÉCIES CATALOGADAS (0.0000%)</span>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span id="catalogStatsLabel">0 / 256.000 ESPÉCIES CATALOGADAS (0.0000%)</span>
+          <button class="btn btn-primary" onclick="exportBestiaryPDF()" style="padding:5px 10px; font-size:11px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            EXPORTAR CATÁLOGO (PDF)
+          </button>
+        </div>
       </div>
       <div class="filters-bar">
         <select id="filterDiscovery" onchange="renderBestiary()">
@@ -809,6 +816,28 @@
   <section id="tab-settings" class="tab-panel">
     <div class="box">
       <div class="box-header">
+        <span>SINCRONIZAÇÃO EM NUVEM (SUPABASE)</span>
+        <span id="cloudStatusLabel" style="color:var(--text-muted);">DESCONECTADO</span>
+      </div>
+      <p class="mono-note">
+        Conecte sua conta via e-mail e senha para sincronizar o progresso entre desktop e celular automaticamente.
+      </p>
+      <div id="cloudAuthForm" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+        <input type="email" id="cloudEmail" placeholder="Seu e-mail..." style="background-color:var(--bg-void); border:1px solid var(--border-active); color:var(--text-bright); font-family:var(--font-mono); font-size:12px; padding:8px 10px; min-width:220px;">
+        <input type="password" id="cloudPassword" placeholder="Sua senha (mín. 6 caracteres)..." style="background-color:var(--bg-void); border:1px solid var(--border-active); color:var(--text-bright); font-family:var(--font-mono); font-size:12px; padding:8px 10px; min-width:200px;">
+        <button class="btn btn-primary" onclick="cloudSignIn()">ENTRAR</button>
+        <button class="btn" onclick="cloudSignUp()">CRIAR CONTA</button>
+      </div>
+      <div id="cloudLoggedPanel" style="display:none; flex-wrap:wrap; gap:10px; align-items:center;">
+        <span class="mono-note" style="color:var(--text-bright);">CONTA ATIVA: <strong id="cloudUserEmail" style="color:var(--accent-cyan);">---</strong></span>
+        <button class="btn btn-primary" onclick="cloudSave(true)">ENVIAR SAVE P/ NUVEM</button>
+        <button class="btn" onclick="cloudLoad(true)">BAIXAR SAVE DA NUVEM</button>
+        <button class="btn" style="border-color:#7f1d1d; color:#f87171;" onclick="cloudSignOut()">SAIR DA CONTA</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-header">
         <span>PERSISTÊNCIA &amp; BACKUP BASE64</span>
         <span id="saveStatusLabel">SALVAMENTO AUTOMÁTICO ATIVO</span>
       </div>
@@ -823,6 +852,10 @@
         <button class="btn" onclick="importSave()">
           <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           IMPORTAR SAVE (BASE64)
+        </button>
+        <button class="btn btn-primary" onclick="exportBestiaryPDF()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          EXPORTAR BESTIÁRIO (PDF)
         </button>
         <button class="btn" style="border-color:#7f1d1d; color:#f87171;" onclick="hardReset()">
           REINICIAR DADOS DE FÁBRICA
@@ -852,7 +885,6 @@
     { id: 9, name: "Singularidade Abissal", min: 43000, max: 50000, reqDepth: 43000, mult: 85000 }
   ];
 
-  // Marcos permanentes por percentual catalogado em cada camada
   const ZONE_MILESTONES = [
     { pct: 0.10, label: "10%", bonus: 0.10 },
     { pct: 0.25, label: "25%", bonus: 0.25 },
@@ -1004,7 +1036,6 @@
     }
   ];
 
-  // Árvore de Pesquisa / Doutrinas da Sonda (3 Ramos)
   const DOCTRINE_BRANCHES = [
     {
       id: "telemetry",
@@ -1077,7 +1108,6 @@
     }
   ];
 
-  // Desafios de Expedição (Prestígio)
   const CHALLENGES = [
     {
       id: "ch_no_winch",
@@ -1283,7 +1313,6 @@
     }
 
     let combo = rollCombinationIndices(zoneId, rngFn);
-    // Doutrina de Telemetria I: chance de re-rolar se já estiver no bestiário
     const rerollChance = Math.min(0.60, (state.doctrines.tel_1 || 0) * 0.06);
     if (rerollChance > 0 && state.bestiary[combo.key] && rngFn() < rerollChance) {
       combo = rollCombinationIndices(zoneId, rngFn);
@@ -1412,11 +1441,14 @@
     state.totalCatches += 1;
 
     const isNew = !state.bestiary[fish.key];
+    const nowIso = new Date().toISOString();
     if (isNew) {
       state.discoveryCounter += 1;
       state.bestiary[fish.key] = {
         count: 1,
         discoveredOrder: state.discoveryCounter,
+        discoveredAt: nowIso,
+        lastCaughtAt: nowIso,
         maxWeight: fish.weightKg,
         maxLength: fish.lengthCm,
         rarityId: fish.rarity.id,
@@ -1429,6 +1461,8 @@
     } else {
       const entry = state.bestiary[fish.key];
       entry.count += 1;
+      entry.lastCaughtAt = nowIso;
+      if (!entry.discoveredAt) entry.discoveredAt = nowIso;
       if (fish.weightKg > entry.maxWeight) entry.maxWeight = fish.weightKg;
       if (fish.lengthCm > entry.maxLength) entry.maxLength = fish.lengthCm;
     }
@@ -1499,6 +1533,7 @@
     for (let i = 0; i < exactSamples; i++) {
       const fish = generateFish(state.selectedZone, Math.random, discMap);
       sampleGain += fish.value;
+      const offlineNowIso = new Date().toISOString();
       if (!state.bestiary[fish.key]) {
         newSpeciesCount++;
         state.discoveryCounter += 1;
@@ -1506,6 +1541,8 @@
         state.bestiary[fish.key] = {
           count: 1,
           discoveredOrder: state.discoveryCounter,
+          discoveredAt: offlineNowIso,
+          lastCaughtAt: offlineNowIso,
           maxWeight: fish.weightKg,
           maxLength: fish.lengthCm,
           rarityId: fish.rarity.id,
@@ -1517,6 +1554,8 @@
         };
       } else {
         state.bestiary[fish.key].count += 1;
+        state.bestiary[fish.key].lastCaughtAt = offlineNowIso;
+        if (!state.bestiary[fish.key].discoveredAt) state.bestiary[fish.key].discoveredAt = offlineNowIso;
       }
     }
 
@@ -1661,7 +1700,6 @@
     document.getElementById("upgCurrencyDisplay").textContent = formatNumber(state.currency);
     document.getElementById("docDataDisplay").textContent = formatNumber(state.prestigeData);
 
-    // Banner de desafio ativo
     const chBanner = document.getElementById("activeChallengeBanner");
     if (state.activeChallenge) {
       const chObj = CHALLENGES.find(c => c.id === state.activeChallenge);
@@ -1674,7 +1712,6 @@
       chBanner.style.display = "none";
     }
 
-    // Zonas e Marcos de Catalogação
     const discoveredByZone = getDiscoveredByZoneMap();
     const zoneGrid = document.getElementById("zoneGrid");
     zoneGrid.innerHTML = ZONES.map(z => {
@@ -1707,7 +1744,6 @@
       `;
     }).join("");
 
-    // Upgrades de Engenharia
     const upgContainer = document.getElementById("upgradesContainer");
     upgContainer.innerHTML = UPGRADE_DEFS.map(def => {
       const lvl = state.upgrades[def.id];
@@ -1727,7 +1763,6 @@
       `;
     }).join("");
 
-    // Doutrinas da Sonda
     const docContainer = document.getElementById("doctrinesContainer");
     docContainer.innerHTML = DOCTRINE_BRANCHES.map(branch => {
       const nodesHtml = branch.nodes.map(node => {
@@ -1760,13 +1795,11 @@
       `;
     }).join("");
 
-    // Estatísticas do Bestiário
     const discoveredCount = Object.keys(state.bestiary).length;
     const pct = ((discoveredCount / TOTAL_COMBINATIONS) * 100).toFixed(4);
     document.getElementById("navCatalogPct").textContent = `${pct}%`;
     document.getElementById("catalogStatsLabel").textContent = `${discoveredCount.toLocaleString("pt-BR")} / ${TOTAL_COMBINATIONS.toLocaleString("pt-BR")} ESPÉCIES CATALOGADAS (${pct}%)`;
 
-    // Prestígio & Desafios
     const pending = calculatePendingPrestige();
     const { dataBonus, rarityBonus } = getChallengeBonuses();
     document.getElementById("prestigeCountLabel").textContent = state.prestigeCount;
@@ -1925,6 +1958,7 @@
           <div style="font-weight:600; color:var(--text-bright); font-size:12px;">${item.name} <span style="color:var(--accent-cyan);">[x${formatNumber(item.count)}]</span></div>
           <div class="mono-note">${item.mutationName}</div>
           <div class="mono-note">${zone.name} | Máx: ${formatNumber(item.maxWeight)}kg / ${formatNumber(item.maxLength)}cm</div>
+          <div class="mono-note">Descoberta: ${formatDateTimeBR(item.discoveredAt)}</div>
         </div>
       `;
     }).join("");
@@ -1944,12 +1978,208 @@
   window.switchTab = switchTab;
   window.dismissOffline = dismissOffline;
 
-  function saveGame() {
+  const SUPABASE_URL = "https://fvydrfzhznzfrqasymja.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_uub3WglD1mJAQ92VZlKM6g_2m-eDLeR";
+  let sbClient = null;
+  let currentCloudUser = null;
+
+  function initSupabase() {
+    if (!window.supabase || !SUPABASE_URL.startsWith("http")) {
+      setCloudStatus("AGUARDANDO CONFIGURAÇÃO DE CHAVES", "var(--accent-amber)");
+      return;
+    }
+    try {
+      sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      sbClient.auth.getSession().then(({ data }) => {
+        if (data && data.session && data.session.user) {
+          onCloudUserReady(data.session.user);
+        }
+      });
+      sbClient.auth.onAuthStateChange((_event, session) => {
+        if (session && session.user) {
+          onCloudUserReady(session.user);
+        } else {
+          currentCloudUser = null;
+          updateCloudUI();
+        }
+      });
+    } catch (e) {
+      setCloudStatus("ERRO AO INICIALIZAR CLIENTE", "var(--accent-red)");
+    }
+  }
+
+  function setCloudStatus(text, color = "var(--text-muted)") {
+    const el = document.getElementById("cloudStatusLabel");
+    if (el) {
+      el.textContent = text;
+      el.style.color = color;
+    }
+  }
+
+  function updateCloudUI() {
+    const authForm = document.getElementById("cloudAuthForm");
+    const loggedPanel = document.getElementById("cloudLoggedPanel");
+    const emailLabel = document.getElementById("cloudUserEmail");
+    if (!authForm || !loggedPanel) return;
+
+    if (currentCloudUser) {
+      authForm.style.display = "none";
+      loggedPanel.style.display = "flex";
+      emailLabel.textContent = currentCloudUser.email || currentCloudUser.id;
+    } else {
+      authForm.style.display = "flex";
+      loggedPanel.style.display = "none";
+      emailLabel.textContent = "---";
+    }
+  }
+
+  async function onCloudUserReady(user) {
+    if (!user.email_confirmed_at && !user.confirmed_at) {
+      currentCloudUser = null;
+      updateCloudUI();
+      setCloudStatus("CONFIRME SEU E-MAIL ANTES DE SINCRONIZAR", "var(--accent-amber)");
+      return;
+    }
+    currentCloudUser = user;
+    updateCloudUI();
+    setCloudStatus("CONECTADO // SINCRONIZANDO...", "var(--accent-cyan)");
+    await cloudLoad(false);
+  }
+
+  async function cloudSignUp() {
+    if (!sbClient) {
+      setCloudStatus("CONFIGURE SUPABASE_URL E ANON_KEY NO CÓDIGO", "var(--accent-amber)");
+      return;
+    }
+    const email = document.getElementById("cloudEmail").value.trim();
+    const password = document.getElementById("cloudPassword").value;
+    if (!email || password.length < 6) {
+      setCloudStatus("INFORME E-MAIL E SENHA (MÍN. 6 DÍGITOS)", "var(--accent-amber)");
+      return;
+    }
+    setCloudStatus("CRIANDO CONTA...", "var(--accent-cyan)");
+    const { data, error } = await sbClient.auth.signUp({ email, password });
+    if (error) {
+      setCloudStatus(`ERRO CADASTRO: ${error.message.toUpperCase()}`, "var(--accent-red)");
+      return;
+    }
+    if (data && data.user && !data.session) {
+      setCloudStatus("CONTA CRIADA // CONFIRME O LINK ENVIADO NO SEU E-MAIL PARA ENTRAR", "var(--accent-teal)");
+    } else if (data && data.user) {
+      await onCloudUserReady(data.user);
+      await cloudSave(true);
+    }
+  }
+  window.cloudSignUp = cloudSignUp;
+
+  async function cloudSignIn() {
+    if (!sbClient) {
+      setCloudStatus("CONFIGURE SUPABASE_URL E ANON_KEY NO CÓDIGO", "var(--accent-amber)");
+      return;
+    }
+    const email = document.getElementById("cloudEmail").value.trim();
+    const password = document.getElementById("cloudPassword").value;
+    if (!email || !password) {
+      setCloudStatus("INFORME E-MAIL E SENHA", "var(--accent-amber)");
+      return;
+    }
+    setCloudStatus("AUTENTICANDO...", "var(--accent-cyan)");
+    const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      setCloudStatus(`ERRO LOGIN: ${error.message.toUpperCase()}`, "var(--accent-red)");
+      return;
+    }
+    if (data && data.user) {
+      await onCloudUserReady(data.user);
+    }
+  }
+  window.cloudSignIn = cloudSignIn;
+
+  async function cloudSignOut() {
+    if (!sbClient) return;
+    await sbClient.auth.signOut();
+    currentCloudUser = null;
+    updateCloudUI();
+    setCloudStatus("DESCONECTADO", "var(--text-muted)");
+  }
+  window.cloudSignOut = cloudSignOut;
+
+  async function cloudSave(manual = false) {
+    if (!sbClient || !currentCloudUser) return;
+    if (manual) setCloudStatus("ENVIANDO SAVE PARA NUVEM...", "var(--accent-cyan)");
+    const payload = {
+      user_id: currentCloudUser.id,
+      save_data: state,
+      updated_at: new Date().toISOString()
+    };
+    const { error } = await sbClient
+      .from("batisfera_saves")
+      .upsert(payload, { onConflict: "user_id" });
+
+    if (error) {
+      setCloudStatus(`ERRO AO SALVAR NUVEM: ${error.message.toUpperCase()}`, "var(--accent-red)");
+    } else {
+      const hora = new Date().toTimeString().slice(0, 8);
+      setCloudStatus(`SINCRONIZADO EM NUVEM (${hora})`, "var(--accent-teal)");
+    }
+  }
+  window.cloudSave = cloudSave;
+
+  async function cloudLoad(manual = false) {
+    if (!sbClient || !currentCloudUser) return;
+    if (manual) setCloudStatus("BUSCANDO SAVE NA NUVEM...", "var(--accent-cyan)");
+    const { data, error } = await sbClient
+      .from("batisfera_saves")
+      .select("save_data, updated_at")
+      .eq("user_id", currentCloudUser.id)
+      .maybeSingle();
+
+    if (error) {
+      setCloudStatus(`ERRO AO LER NUVEM: ${error.message.toUpperCase()}`, "var(--accent-red)");
+      return;
+    }
+
+    if (!data || !data.save_data) {
+      await cloudSave(false);
+      return;
+    }
+
+    const remoteState = data.save_data;
+    const remoteTick = remoteState.lastTick || 0;
+    const localTick = state.lastTick || 0;
+
+    if (manual || remoteTick > localTick || state.totalCatches === 0) {
+      state = Object.assign({}, state, remoteState);
+      state.upgrades = Object.assign({ line: 0, hull: 0, winch: 0, bait: 0, sonar: 0 }, remoteState.upgrades || {});
+      state.doctrines = Object.assign({ tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 }, remoteState.doctrines || {});
+      state.completedChallenges = remoteState.completedChallenges || {};
+      state.bestiary = remoteState.bestiary || {};
+      if (!state.discoveryCounter) {
+        state.discoveryCounter = Object.keys(state.bestiary).length;
+      }
+      const now = Date.now();
+      const elapsedSec = Math.max(0, (now - (state.lastTick || now)) / 1000);
+      processOfflineProgress(elapsedSec);
+      saveGame(false);
+      updateUI();
+      renderBestiary();
+      const hora = new Date().toTimeString().slice(0, 8);
+      setCloudStatus(`SAVE CARREGADO DA NUVEM (${hora})`, "var(--accent-teal)");
+    } else {
+      await cloudSave(false);
+    }
+  }
+  window.cloudLoad = cloudLoad;
+
+  function saveGame(syncCloud = true) {
     state.lastTick = Date.now();
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     } catch (e) {
       console.error("Falha ao gravar save local:", e);
+    }
+    if (syncCloud && currentCloudUser) {
+      cloudSave(false);
     }
   }
 
@@ -1974,6 +2204,191 @@
       console.error("Erro ao carregar save:", e);
     }
   }
+
+  function formatDateTimeBR(isoStr) {
+    if (!isoStr) return "Registro anterior";
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return "Registro anterior";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  function exportBestiaryPDF() {
+    const entries = Object.entries(state.bestiary);
+    if (entries.length === 0) {
+      alert("Nenhuma espécie foi descoberta ainda para exportar.");
+      return;
+    }
+
+    entries.sort((a, b) => (a[1].discoveredOrder || 0) - (b[1].discoveredOrder || 0));
+
+    const printWin = window.open("", "_blank");
+    if (!printWin) {
+      alert("Permita pop-ups no navegador para gerar o documento PDF.");
+      return;
+    }
+
+    const totalPct = ((entries.length / TOTAL_COMBINATIONS) * 100).toFixed(4);
+    const emissionDate = formatDateTimeBR(new Date().toISOString());
+
+    const rowsHtml = entries.map(([key, item], idx) => {
+      const rarity = RARITIES[item.rarityId] || RARITIES[0];
+      const zone = ZONES[item.zoneId] || ZONES[0];
+      const discTime = formatDateTimeBR(item.discoveredAt);
+      const lastTime = formatDateTimeBR(item.lastCaughtAt || item.discoveredAt);
+      return `
+        <tr>
+          <td>#${item.discoveredOrder || (idx + 1)}</td>
+          <td><strong>${item.name}</strong><br><span class="sub">${item.mutationName}</span></td>
+          <td>${rarity.name}</td>
+          <td>${zone.name}<br><span class="sub">${zone.min.toLocaleString("pt-BR")}m - ${zone.max.toLocaleString("pt-BR")}m</span></td>
+          <td>${formatNumber(item.maxWeight)} kg / ${formatNumber(item.maxLength)} cm</td>
+          <td>${formatNumber(item.count)}</td>
+          <td>${discTime}</td>
+          <td>${lastTime}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const docHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>BATISFERA // Catálogo Taxonômico - lhpbrambila</title>
+<style>
+  @page {
+    size: A4 landscape;
+    margin: 14mm 12mm;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    color: #0f172a;
+    background: #ffffff;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .report-header {
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .report-title h1 {
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .report-title p {
+    font-size: 10px;
+    color: #334155;
+    margin-top: 2px;
+  }
+  .signature-box {
+    text-align: right;
+  }
+  .signature-tag {
+    font-size: 13px;
+    font-weight: bold;
+    border: 1px solid #0f172a;
+    padding: 3px 8px;
+    display: inline-block;
+    letter-spacing: 1px;
+  }
+  .signature-meta {
+    font-size: 9px;
+    color: #475569;
+    margin-top: 4px;
+  }
+  .summary-strip {
+    display: flex;
+    gap: 24px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    padding: 7px 10px;
+    margin-bottom: 12px;
+    font-size: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 5px 6px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #0f172a;
+    color: #ffffff;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .sub {
+    font-size: 8.5px;
+    color: #475569;
+  }
+</style>
+</head>
+<body>
+  <div class="report-header">
+    <div class="report-title">
+      <h1>BATISFERA // RELATÓRIO DE ESPÉCIES ABISSAIS DESCOBERTAS</h1>
+      <p>Registro Taxonômico Oficial de Expedição Suboceânica</p>
+    </div>
+    <div class="signature-box">
+      <div class="signature-tag">ASSINATURA: lhpbrambila</div>
+      <div class="signature-meta">Emissão: ${emissionDate}</div>
+    </div>
+  </div>
+
+  <div class="summary-strip">
+    <div><strong>ESPÉCIES DESCOBERTAS:</strong> ${entries.length.toLocaleString("pt-BR")} / ${TOTAL_COMBINATIONS.toLocaleString("pt-BR")} (${totalPct}%)</div>
+    <div><strong>TOTAL DE CAPTURAS:</strong> ${formatNumber(state.totalCatches)}</div>
+    <div><strong>EXPEDIÇÕES CONCLUÍDAS:</strong> ${state.prestigeCount}</div>
+    <div><strong>DADOS ABISSAIS:</strong> ${formatNumber(state.prestigeData)}</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:5%;">Ordem</th>
+        <th style="width:24%;">Espécie &amp; Mutação</th>
+        <th style="width:9%;">Raridade</th>
+        <th style="width:17%;">Estrato Batimétrico</th>
+        <th style="width:14%;">Recorde (Massa/Comp.)</th>
+        <th style="width:7%;">Qtd.</th>
+        <th style="width:12%;">1ª Descoberta</th>
+        <th style="width:12%;">Última Captura</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+    printWin.document.open();
+    printWin.document.write(docHtml);
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => {
+      printWin.print();
+    }, 300);
+  }
+  window.exportBestiaryPDF = exportBestiaryPDF;
 
   function exportSave() {
     saveGame();
@@ -2074,10 +2489,11 @@
 
   initFilters();
   loadGame();
+  initSupabase();
   updateUI();
   setInterval(gameLoop, 250);
   setInterval(saveGame, 15000);
-  window.addEventListener("beforeunload", saveGame);
+  window.addEventListener("beforeunload", () => saveGame(false));
 })();
 </script>
 </body>
