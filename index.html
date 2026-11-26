@@ -542,6 +542,68 @@
     font-size: 11px;
     color: var(--text-muted);
   }
+
+  .achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+    max-height: 560px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .ach-card {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-card);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .ach-card.locked {
+    opacity: 0.55;
+    border-style: dashed;
+  }
+
+  .ach-card.unlocked {
+    border-color: var(--border-active);
+  }
+
+  .ach-card.tier-platina.unlocked {
+    border-color: var(--accent-cyan);
+    background-color: #0b1822;
+  }
+
+  .tier-badge {
+    font-size: 9px;
+    padding: 1px 6px;
+    border: 1px solid currentColor;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tier-bronze { color: #cd7f32; }
+  .tier-prata { color: #cbd5e1; }
+  .tier-ouro { color: #fbbf24; }
+  .tier-platina { color: #38bdf8; }
+
+  .platina-banner {
+    border: 1px solid var(--border-dim);
+    background-color: var(--bg-card);
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .platina-banner.completed {
+    border-color: var(--accent-cyan);
+    background-color: #091721;
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -616,6 +678,10 @@
     <button class="nav-btn" data-tab="bestiary" onclick="switchTab('bestiary')">
       <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="13" y2="15"/></svg>
       BESTIÁRIO (<span id="navCatalogPct">0.0000%</span>)
+    </button>
+    <button class="nav-btn" data-tab="achievements" onclick="switchTab('achievements')">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+      CONQUISTAS (<span id="navAchCount">0/108</span>)
     </button>
     <button class="nav-btn" data-tab="expedition" onclick="switchTab('expedition')">
       <svg class="icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
@@ -766,6 +832,65 @@
       </div>
       <div id="bestiaryInfoNote" class="mono-note"></div>
       <div id="bestiaryGrid" class="bestiary-grid"></div>
+    </div>
+  </section>
+
+  <!-- ABA CONQUISTAS -->
+  <section id="tab-achievements" class="tab-panel">
+    <div class="box">
+      <div class="box-header">
+        <span>SALA DE TROFÉUS // PROTOCOLO DE PLATINA</span>
+        <span id="achStatsHeader">0 / 108 DESBLOQUEADAS (0.0%)</span>
+      </div>
+
+      <div id="platinaBanner" class="platina-banner">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <svg class="icon" viewBox="0 0 24 24" style="width:28px;height:28px;color:var(--accent-cyan);">
+            <polygon points="12 2 15 9 22 9 16 14 18 21 12 17 6 21 8 14 2 9 9 9"/>
+          </svg>
+          <div>
+            <strong id="platinaTitle" style="color:var(--text-bright); font-size:13px;">TROFÉU DE PLATINA: ARQUITETO DO ABISMO</strong>
+            <div id="platinaDesc" class="mono-note">Desbloqueie todas as outras 107 conquistas para alcançar a platina integral da expedição BATISFERA.</div>
+          </div>
+        </div>
+        <div style="min-width:180px; flex:1; max-width:280px;">
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-bottom:4px;">
+            <span>PROGRESSO DA PLATINA</span>
+            <span id="platinaPctLabel">0.0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="platinaProgressFill" class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <select id="filterAchState" onchange="renderAchievements()">
+          <option value="all">ESTADO: TODAS AS CONQUISTAS</option>
+          <option value="unlocked">ESTADO: DESBLOQUEADAS</option>
+          <option value="locked">ESTADO: BLOQUEADAS</option>
+        </select>
+        <select id="filterAchCat" onchange="renderAchievements()">
+          <option value="all">CATEGORIA: TODAS</option>
+          <option value="batimetria">Batimetria &amp; Profundidade</option>
+          <option value="bestiario">Catalogação &amp; Bestiário</option>
+          <option value="estrato">Domínio de Estrato (100%)</option>
+          <option value="raridade">Raridades &amp; Mutações</option>
+          <option value="capturas">Capturas &amp; Biomassa</option>
+          <option value="engenharia">Engenharia &amp; Doutrinas</option>
+          <option value="expedicao">Expedições &amp; Desafios</option>
+        </select>
+        <select id="filterAchTier" onchange="renderAchievements()">
+          <option value="all">GRAU: TODOS</option>
+          <option value="bronze">Bronze</option>
+          <option value="prata">Prata</option>
+          <option value="ouro">Ouro</option>
+          <option value="platina">Platina</option>
+        </select>
+        <input type="text" id="filterAchSearch" placeholder="Filtrar conquista..." oninput="renderAchievements()">
+      </div>
+
+      <div id="achievementsGrid" class="achievements-grid"></div>
     </div>
   </section>
 
@@ -1172,6 +1297,7 @@
     activeChallenge: null,
     queuedChallenge: null,
     completedChallenges: {},
+    achievements: {},
     bestiary: {},
     discoveryCounter: 0,
     lastTick: Date.now(),
@@ -1179,6 +1305,340 @@
   };
 
   let logs = [];
+
+  function buildAchievementsList() {
+    const list = [];
+
+    const depthMilestones = [
+      { id: "dep_200", name: "Limiar do Crepúsculo", desc: "Alcance 200 m de profundidade operacional.", tier: "bronze", req: 200 },
+      { id: "dep_500", name: "Penumbra Oceânica", desc: "Alcance 500 m de profundidade operacional.", tier: "bronze", req: 500 },
+      { id: "dep_1000", name: "Zona da Meia-Noite", desc: "Alcance 1.000 m de profundidade operacional.", tier: "bronze", req: 1000 },
+      { id: "dep_2500", name: "Pressão Esmagadora", desc: "Alcance 2.500 m de profundidade operacional.", tier: "bronze", req: 2500 },
+      { id: "dep_4000", name: "Planície Abissal", desc: "Alcance 4.000 m de profundidade operacional.", tier: "prata", req: 4000 },
+      { id: "dep_6000", name: "Mergulho Hadal", desc: "Alcance 6.000 m de profundidade operacional.", tier: "prata", req: 6000 },
+      { id: "dep_11000", name: "Fundo das Marianas", desc: "Alcance 11.000 m de profundidade operacional.", tier: "prata", req: 11000 },
+      { id: "dep_18000", name: "Ruptura Tectônica", desc: "Alcance 18.000 m de profundidade operacional.", tier: "ouro", req: 18000 },
+      { id: "dep_26000", name: "Calor Geotérmico", desc: "Alcance 26.000 m de profundidade operacional.", tier: "ouro", req: 26000 },
+      { id: "dep_35000", name: "Núcleo Barométrico", desc: "Alcance 35.000 m de profundidade operacional.", tier: "ouro", req: 35000 },
+      { id: "dep_43000", name: "Horizonte de Eventos", desc: "Alcance 43.000 m de profundidade operacional.", tier: "ouro", req: 43000 },
+      { id: "dep_50000", name: "Fundo Absoluto", desc: "Atinja o limite máximo estrutural de 50.000 m.", tier: "ouro", req: 50000 }
+    ];
+    depthMilestones.forEach(d => {
+      list.push({
+        id: d.id,
+        cat: "batimetria",
+        tier: d.tier,
+        name: d.name,
+        desc: d.desc,
+        check: (ctx) => ctx.maxDepth >= d.req
+      });
+    });
+
+    const catMilestones = [
+      { id: "cat_1", name: "Primeiro Registro", desc: "Catalogue sua primeira espécie no Bestiário.", tier: "bronze", req: 1 },
+      { id: "cat_10", name: "Caderno de Campo", desc: "Catalogue 10 espécies distintas.", tier: "bronze", req: 10 },
+      { id: "cat_25", name: "Naturalista Iniciante", desc: "Catalogue 25 espécies distintas.", tier: "bronze", req: 25 },
+      { id: "cat_50", name: "Taxonomista de Bordo", desc: "Catalogue 50 espécies distintas.", tier: "bronze", req: 50 },
+      { id: "cat_100", name: "Centena Biológica", desc: "Catalogue 100 espécies distintas.", tier: "bronze", req: 100 },
+      { id: "cat_250", name: "Arquivo Pelágico", desc: "Catalogue 250 espécies distintas.", tier: "bronze", req: 250 },
+      { id: "cat_500", name: "Coleção Suboceânica", desc: "Catalogue 500 espécies distintas.", tier: "prata", req: 500 },
+      { id: "cat_1000", name: "Milhar Taxonômico", desc: "Catalogue 1.000 espécies distintas.", tier: "prata", req: 1000 },
+      { id: "cat_2500", name: "Curador do Abismo", desc: "Catalogue 2.500 espécies distintas.", tier: "prata", req: 2500 },
+      { id: "cat_5000", name: "Enciclopédia Marinha", desc: "Catalogue 5.000 espécies distintas.", tier: "prata", req: 5000 },
+      { id: "cat_10000", name: "Dez Mil Espécimes", desc: "Catalogue 10.000 espécies distintas.", tier: "ouro", req: 10000 },
+      { id: "cat_25000", name: "Mestre da Taxonomia", desc: "Catalogue 25.000 espécies distintas.", tier: "ouro", req: 25000 },
+      { id: "cat_50000", name: "Biblioteca Viva", desc: "Catalogue 50.000 espécies distintas.", tier: "ouro", req: 50000 },
+      { id: "cat_100000", name: "Onisciência Abissal", desc: "Catalogue 100.000 espécies distintas.", tier: "ouro", req: 100000 },
+      { id: "cat_200000", name: "Limiar da Totalidade", desc: "Catalogue 200.000 espécies distintas.", tier: "ouro", req: 200000 },
+      { id: "cat_256000", name: "Gênese Completa", desc: "Catalogue todas as 256.000 espécies do oceano.", tier: "ouro", req: 256000 }
+    ];
+    catMilestones.forEach(c => {
+      list.push({
+        id: c.id,
+        cat: "bestiario",
+        tier: c.tier,
+        name: c.name,
+        desc: c.desc,
+        check: (ctx) => ctx.discoveredCount >= c.req
+      });
+    });
+
+    ZONES.forEach(z => {
+      list.push({
+        id: `zone_10_${z.id}`,
+        cat: "estrato",
+        tier: z.id < 4 ? "bronze" : (z.id < 8 ? "prata" : "ouro"),
+        name: `Reconhecimento: ${z.name}`,
+        desc: `Catalogue pelo menos 10% das espécies de ${z.name} (2.560 espécies).`,
+        check: (ctx) => (ctx.discoveredByZone[z.id] || 0) >= Math.ceil(COMBINATIONS_PER_ZONE * 0.10)
+      });
+      list.push({
+        id: `zone_100_${z.id}`,
+        cat: "estrato",
+        tier: "ouro",
+        name: `Soberano: ${z.name}`,
+        desc: `Catalogue 100% das 25.600 espécies de ${z.name}.`,
+        check: (ctx) => (ctx.discoveredByZone[z.id] || 0) >= COMBINATIONS_PER_ZONE
+      });
+    });
+
+    const rarityAchs = [
+      { rId: 1, id: "rar_1", name: "Variação Sutil", desc: "Capture seu primeiro espécime Incomum.", tier: "bronze" },
+      { rId: 2, id: "rar_2", name: "Achado Precioso", desc: "Capture seu primeiro espécime Raro.", tier: "bronze" },
+      { rId: 3, id: "rar_3", name: "Habitante das Trevas", desc: "Capture seu primeiro espécime Abissal.", tier: "prata" },
+      { rId: 4, id: "rar_4", name: "Memória Fóssil", desc: "Capture seu primeiro espécime Ancestral.", tier: "prata" },
+      { rId: 5, id: "rar_5", name: "Aberração Genética", desc: "Capture seu primeiro espécime Anômalo.", tier: "ouro" },
+      { rId: 6, id: "rar_6", name: "Relíquia Submersa", desc: "Capture seu primeiro espécime Relíquia.", tier: "ouro" },
+      { rId: 7, id: "rar_7", name: "Mito Encarnado", desc: "Capture seu primeiro espécime Mitológico.", tier: "ouro" }
+    ];
+    rarityAchs.forEach(r => {
+      list.push({
+        id: r.id,
+        cat: "raridade",
+        tier: r.tier,
+        name: r.name,
+        desc: r.desc,
+        check: (ctx) => (ctx.rarityCounts[r.rId] || 0) >= 1
+      });
+    });
+
+    list.push(
+      { id: "rar_abissal_25", cat: "raridade", tier: "prata", name: "Colecionador Abissal", desc: "Catalogue 25 espécies distintas de raridade Abissal.", check: (ctx) => (ctx.rarityCounts[3] || 0) >= 25 },
+      { id: "rar_ancestral_10", cat: "raridade", tier: "ouro", name: "Paleontólogo Marinho", desc: "Catalogue 10 espécies distintas de raridade Ancestral.", check: (ctx) => (ctx.rarityCounts[4] || 0) >= 10 },
+      { id: "rar_anomalo_5", cat: "raridade", tier: "ouro", name: "Contenção de Anomalias", desc: "Catalogue 5 espécies distintas de raridade Anômalo.", check: (ctx) => (ctx.rarityCounts[5] || 0) >= 5 },
+      { id: "mut_bio_1", cat: "raridade", tier: "bronze", name: "Luz na Escuridão", desc: "Catalogue sua primeira espécie com Mutação Bioluminescente.", check: (ctx) => (ctx.mutationCounts[1] || 0) >= 1 },
+      { id: "mut_gig_1", cat: "raridade", tier: "bronze", name: "Proporções Titânicas", desc: "Catalogue sua primeira espécie com Mutação Gigantismo.", check: (ctx) => (ctx.mutationCounts[2] || 0) >= 1 },
+      { id: "mut_pol_1", cat: "raridade", tier: "bronze", name: "Forma Instável", desc: "Catalogue sua primeira espécie com Mutação Polimórfica.", check: (ctx) => (ctx.mutationCounts[3] || 0) >= 1 },
+      { id: "mut_bio_100", cat: "raridade", tier: "prata", name: "Farol Biológico", desc: "Catalogue 100 espécies com Mutação Bioluminescente.", check: (ctx) => (ctx.mutationCounts[1] || 0) >= 100 },
+      { id: "mut_gig_100", cat: "raridade", tier: "prata", name: "Fauna Colossal", desc: "Catalogue 100 espécies com Mutação Gigantismo.", check: (ctx) => (ctx.mutationCounts[2] || 0) >= 100 },
+      { id: "mut_pol_100", cat: "raridade", tier: "prata", name: "Caos Morfológico", desc: "Catalogue 100 espécies com Mutação Polimórfica.", check: (ctx) => (ctx.mutationCounts[3] || 0) >= 100 },
+      { id: "dup_100", cat: "raridade", tier: "prata", name: "Amostragem Redundante", desc: "Capture a mesma espécie exata 100 vezes.", check: (ctx) => ctx.maxSingleSpeciesCount >= 100 }
+    );
+
+    const catchMilestones = [
+      { id: "cap_1", name: "Içar Guincho", desc: "Realize 1 captura.", tier: "bronze", req: 1 },
+      { id: "cap_100", name: "Rotina de Coleta", desc: "Realize 100 capturas totais.", tier: "bronze", req: 100 },
+      { id: "cap_1000", name: "Operação Contínua", desc: "Realize 1.000 capturas totais.", tier: "bronze", req: 1000 },
+      { id: "cap_10000", name: "Sonda Incansável", desc: "Realize 10.000 capturas totais.", tier: "prata", req: 10000 },
+      { id: "cap_50000", name: "Extração em Massa", desc: "Realize 50.000 capturas totais.", tier: "prata", req: 50000 },
+      { id: "cap_250000", name: "Colheita Oceânica", desc: "Realize 250.000 capturas totais.", tier: "ouro", req: 250000 },
+      { id: "cap_1000000", name: "Um Milhão de Espécimes", desc: "Realize 1.000.000 de capturas totais.", tier: "ouro", req: 1000000 },
+      { id: "cap_5000000", name: "Legado Eterno da Batisfera", desc: "Realize 5.000.000 de capturas totais.", tier: "ouro", req: 5000000 }
+    ];
+    catchMilestones.forEach(c => {
+      list.push({
+        id: c.id,
+        cat: "capturas",
+        tier: c.tier,
+        name: c.name,
+        desc: c.desc,
+        check: () => state.totalCatches >= c.req
+      });
+    });
+
+    const bioMilestones = [
+      { id: "bio_1e4", name: "Primeiros Fundos", desc: "Acumule 10.000 créditos de biomassa.", tier: "bronze", req: 1e4 },
+      { id: "bio_1e6", name: "Milhão Biológico", desc: "Acumule 1.00M de créditos de biomassa.", tier: "bronze", req: 1e6 },
+      { id: "bio_1e9", name: "Bilhão Submerso", desc: "Acumule 1.00B de créditos de biomassa.", tier: "prata", req: 1e9 },
+      { id: "bio_1e12", name: "Trilhão Abissal", desc: "Acumule 1.00T de créditos de biomassa.", tier: "prata", req: 1e12 },
+      { id: "bio_1e15", name: "Quadrilhão Pelágico", desc: "Acumule 1.00Qa de créditos de biomassa.", tier: "ouro", req: 1e15 },
+      { id: "bio_1e18", name: "Quintilhão Hadal", desc: "Acumule 1.00Qi de créditos de biomassa.", tier: "ouro", req: 1e18 },
+      { id: "wt_1000", name: "Peso Pesado", desc: "Registre um espécime com pelo menos 1.000 kg.", tier: "prata", reqWeight: 1000 },
+      { id: "len_1000", name: "Serpente Gigante", desc: "Registre um espécime com pelo menos 1.000 cm (10 metros).", tier: "prata", reqLength: 1000 }
+    ];
+    bioMilestones.forEach(b => {
+      if (b.req) {
+        list.push({
+          id: b.id,
+          cat: "capturas",
+          tier: b.tier,
+          name: b.name,
+          desc: b.desc,
+          check: () => Math.max(state.currency, state.totalEarnedRun) >= b.req
+        });
+      } else if (b.reqWeight) {
+        list.push({
+          id: b.id,
+          cat: "capturas",
+          tier: b.tier,
+          name: b.name,
+          desc: b.desc,
+          check: (ctx) => ctx.maxWeight >= b.reqWeight
+        });
+      } else if (b.reqLength) {
+        list.push({
+          id: b.id,
+          cat: "capturas",
+          tier: b.tier,
+          name: b.name,
+          desc: b.desc,
+          check: (ctx) => ctx.maxLength >= b.reqLength
+        });
+      }
+    });
+
+    list.push(
+      { id: "upg_line_10", cat: "engenharia", tier: "bronze", name: "Cabo Reforçado", desc: "Alcance nível 10 em Comprimento da Linha de Titânio.", check: () => state.upgrades.line >= 10 },
+      { id: "upg_line_25", cat: "engenharia", tier: "prata", name: "Linha Interminável", desc: "Alcance nível 25 em Comprimento da Linha de Titânio.", check: () => state.upgrades.line >= 25 },
+      { id: "upg_hull_10", cat: "engenharia", tier: "bronze", name: "Blindagem Estanque", desc: "Alcance nível 10 em Casco de Pressão Hidrostática.", check: () => state.upgrades.hull >= 10 },
+      { id: "upg_hull_25", cat: "engenharia", tier: "prata", name: "Fortaleza Submarina", desc: "Alcance nível 25 em Casco de Pressão Hidrostática.", check: () => state.upgrades.hull >= 25 },
+      { id: "upg_winch_15", cat: "engenharia", tier: "bronze", name: "Tração Otimizada", desc: "Alcance nível 15 em Automação do Guincho Contínuo.", check: () => state.upgrades.winch >= 15 },
+      { id: "upg_winch_40", cat: "engenharia", tier: "prata", name: "Ciclo Sincronizado", desc: "Alcance nível 40 em Automação do Guincho Contínuo.", check: () => state.upgrades.winch >= 40 },
+      { id: "upg_bait_15", cat: "engenharia", tier: "bronze", name: "Atrativo Químico", desc: "Alcance nível 15 em Isca Biológica Sintética.", check: () => state.upgrades.bait >= 15 },
+      { id: "upg_sonar_15", cat: "engenharia", tier: "prata", name: "Eco de Alta Frequência", desc: "Alcance nível 15 em Sonar de Ressonância Rara.", check: () => state.upgrades.sonar >= 15 },
+      { id: "upg_sum_100", cat: "engenharia", tier: "ouro", name: "Engenheiro-Chefe", desc: "Some 100 níveis totais de melhorias de engenharia na mesma expedição.", check: () => (state.upgrades.line + state.upgrades.hull + state.upgrades.winch + state.upgrades.bait + state.upgrades.sonar) >= 100 },
+      { id: "doc_first", cat: "engenharia", tier: "bronze", name: "Primeira Doutrina", desc: "Pesquise seu primeiro nível em qualquer Doutrina da Sonda.", check: (ctx) => ctx.doctrineSum >= 1 },
+      { id: "doc_tel_max", cat: "engenharia", tier: "ouro", name: "Mestre da Telemetria", desc: "Maximize todos os nós do Ramo I // Telemetria.", check: () => (state.doctrines.tel_1 >= 10 && state.doctrines.tel_2 >= 10) },
+      { id: "doc_ext_max", cat: "engenharia", tier: "ouro", name: "Mestre da Extração", desc: "Maximize todos os nós do Ramo II // Extração.", check: () => (state.doctrines.ext_1 >= 15 && state.doctrines.ext_2 >= 10) },
+      { id: "doc_stb_max", cat: "engenharia", tier: "ouro", name: "Mestre da Estabilidade", desc: "Maximize todos os nós do Ramo III // Estabilidade Estrutural.", check: () => (state.doctrines.stb_1 >= 10 && state.doctrines.stb_2 >= 10) },
+      { id: "doc_all_max", cat: "engenharia", tier: "ouro", name: "Doutrina Plena", desc: "Conclua 100% de toda a árvore de Doutrinas da Sonda (65/65).", check: (ctx) => ctx.doctrineSum >= 65 }
+    );
+
+    list.push(
+      { id: "exp_1", cat: "expedicao", tier: "bronze", name: "Retorno à Superfície", desc: "Conclua sua 1ª Nova Expedição.", check: () => state.prestigeCount >= 1 },
+      { id: "exp_5", cat: "expedicao", tier: "prata", name: "Navegador Veterano", desc: "Conclua 5 Expedições.", check: () => state.prestigeCount >= 5 },
+      { id: "exp_15", cat: "expedicao", tier: "prata", name: "Comandante Oceânico", desc: "Conclua 15 Expedições.", check: () => state.prestigeCount >= 15 },
+      { id: "exp_30", cat: "expedicao", tier: "ouro", name: "Almirante das Profundezas", desc: "Conclua 30 Expedições.", check: () => state.prestigeCount >= 30 },
+      { id: "data_100", cat: "expedicao", tier: "bronze", name: "Banco de Dados", desc: "Acumule 100 Dados Abissais disponíveis.", check: () => state.prestigeData >= 100 },
+      { id: "data_1000", cat: "expedicao", tier: "prata", name: "Servidor Subaquático", desc: "Acumule 1.000 Dados Abissais disponíveis.", check: () => state.prestigeData >= 1000 },
+      { id: "data_10000", cat: "expedicao", tier: "ouro", name: "Arquivo Científico Global", desc: "Acumule 10.000 Dados Abissais disponíveis.", check: () => state.prestigeData >= 10000 },
+      { id: "ch_done_1", cat: "expedicao", tier: "prata", name: "Protocolo I Superado", desc: "Conclua o desafio Protocolo I: Guincho Manual-Base.", check: () => !!state.completedChallenges["ch_no_winch"] },
+      { id: "ch_done_2", cat: "expedicao", tier: "prata", name: "Protocolo II Superado", desc: "Conclua o desafio Protocolo II: Pressão Superficial.", check: () => !!state.completedChallenges["ch_shallow"] },
+      { id: "ch_done_3", cat: "expedicao", tier: "ouro", name: "Protocolo III Superado", desc: "Conclua o desafio Protocolo III: Coleta Estéril.", check: () => !!state.completedChallenges["ch_no_bait"] },
+      { id: "ch_done_4", cat: "expedicao", tier: "ouro", name: "Protocolo IV Superado", desc: "Conclua o desafio Protocolo IV: Batisfera Austera.", check: () => !!state.completedChallenges["ch_austere"] },
+      { id: "ch_all", cat: "expedicao", tier: "ouro", name: "Mestre dos Protocolos", desc: "Conclua todos os 4 Desafios de Expedição.", check: () => !!(state.completedChallenges["ch_no_winch"] && state.completedChallenges["ch_shallow"] && state.completedChallenges["ch_no_bait"] && state.completedChallenges["ch_austere"]) }
+    );
+
+    list.push({
+      id: "platina_abissal",
+      cat: "platina",
+      tier: "platina",
+      name: "Arquiteto do Abismo",
+      desc: "Desbloqueie todas as outras 107 conquistas da BATISFERA.",
+      check: (ctx) => ctx.unlockedNonPlatina >= (list.length - 1)
+    });
+
+    return list;
+  }
+
+  const ACHIEVEMENTS = buildAchievementsList();
+
+  function evaluateAchievements(silent = false) {
+    if (!state.achievements) state.achievements = {};
+
+    const entries = Object.values(state.bestiary);
+    const discoveredCount = entries.length;
+    const discoveredByZone = new Array(ZONES.length).fill(0);
+    const rarityCounts = new Array(RARITIES.length).fill(0);
+    const mutationCounts = new Array(MUTATIONS.length).fill(0);
+    let maxWeight = 0;
+    let maxLength = 0;
+    let maxSingleSpeciesCount = 0;
+
+    entries.forEach(item => {
+      if (typeof item.zoneId === "number" && discoveredByZone[item.zoneId] !== undefined) {
+        discoveredByZone[item.zoneId] += 1;
+      }
+      if (typeof item.rarityId === "number" && rarityCounts[item.rarityId] !== undefined) {
+        rarityCounts[item.rarityId] += 1;
+      }
+      const mId = typeof item.mutationId === "number"
+        ? item.mutationId
+        : MUTATIONS.findIndex(m => m.name === item.mutationName);
+      if (mId >= 0 && mutationCounts[mId] !== undefined) {
+        mutationCounts[mId] += 1;
+      }
+      if ((item.maxWeight || 0) > maxWeight) maxWeight = item.maxWeight;
+      if ((item.maxLength || 0) > maxLength) maxLength = item.maxLength;
+      if ((item.count || 0) > maxSingleSpeciesCount) maxSingleSpeciesCount = item.count;
+    });
+
+    const doctrineSum = Object.values(state.doctrines || {}).reduce((a, b) => a + (b || 0), 0);
+
+    const ctx = {
+      maxDepth: getMaxAllowedDepth(),
+      discoveredCount,
+      discoveredByZone,
+      rarityCounts,
+      mutationCounts,
+      maxWeight,
+      maxLength,
+      maxSingleSpeciesCount,
+      doctrineSum,
+      unlockedNonPlatina: 0
+    };
+
+    let newlyUnlocked = [];
+    const nowIso = new Date().toISOString();
+
+    ACHIEVEMENTS.forEach(ach => {
+      if (ach.id === "platina_abissal") return;
+      if (state.achievements[ach.id]) {
+        ctx.unlockedNonPlatina += 1;
+      } else if (ach.check(ctx)) {
+        state.achievements[ach.id] = nowIso;
+        ctx.unlockedNonPlatina += 1;
+        newlyUnlocked.push(ach);
+      }
+    });
+
+    const platinaAch = ACHIEVEMENTS.find(a => a.id === "platina_abissal");
+    if (platinaAch && !state.achievements[platinaAch.id] && platinaAch.check(ctx)) {
+      state.achievements[platinaAch.id] = nowIso;
+      newlyUnlocked.push(platinaAch);
+    }
+
+    if (!silent && newlyUnlocked.length > 0) {
+      newlyUnlocked.forEach(ach => addAchievementLog(ach));
+    }
+  }
+
+  function addAchievementLog(ach) {
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 8);
+    logs.unshift({
+      time: timeStr,
+      name: `TROFÉU DESBLOQUEADO: ${ach.name}`,
+      count: null,
+      rarity: { css: ach.tier === "platina" ? "r-2" : (ach.tier === "ouro" ? "r-6" : (ach.tier === "prata" ? "r-0" : "r-1")) },
+      value: null,
+      depth: null,
+      isAchievement: true,
+      tierLabel: ach.tier.toUpperCase()
+    });
+    if (logs.length > 45) logs.pop();
+    renderLogFeed();
+  }
+
+  function renderLogFeed() {
+    const feed = document.getElementById("logFeed");
+    if (!feed) return;
+    feed.innerHTML = logs.map(item => {
+      if (item.isAchievement) {
+        return `
+          <div class="log-entry" style="border-bottom-color:var(--border-active);">
+            <div>
+              <span class="log-time">[${item.time}]</span>
+              <span class="${item.rarity.css}" style="font-weight:600;">${item.name}</span>
+            </div>
+            <div style="color:var(--accent-cyan); font-size:10px; white-space:nowrap;">[${item.tierLabel}]</div>
+          </div>
+        `;
+      }
+      return `
+        <div class="log-entry">
+          <div>
+            <span class="log-time">[${item.time}]</span>
+            <span class="${item.rarity.css}">${item.name}</span>
+            <span style="color:var(--text-bright); font-size:11px;">[x${formatNumber(item.count)}]</span>
+            ${item.isNew ? '<span style="color:var(--accent-teal); font-size:10px;">[NOVO]</span>' : ''}
+            <span class="mono-note">(${item.depth}m)</span>
+          </div>
+          <div style="color:var(--text-bright); white-space:nowrap;">+${formatNumber(item.value)}</div>
+        </div>
+      `;
+    }).join("");
+  }
 
   function getBaseDepthBonus() {
     return (state.doctrines.stb_1 || 0) * 100;
@@ -1469,6 +1929,7 @@
 
     updateSpecimenDisplay(fish, isNew, state.bestiary[fish.key].count);
     addLog(fish, isNew, state.bestiary[fish.key].count);
+    evaluateAchievements(false);
   }
 
   function updateSpecimenDisplay(fish, isNew, catchCount) {
@@ -1503,20 +1964,7 @@
       isNew: isNew
     });
     if (logs.length > 45) logs.pop();
-
-    const feed = document.getElementById("logFeed");
-    feed.innerHTML = logs.map(item => `
-      <div class="log-entry">
-        <div>
-          <span class="log-time">[${item.time}]</span>
-          <span class="${item.rarity.css}">${item.name}</span>
-          <span style="color:var(--text-bright); font-size:11px;">[x${formatNumber(item.count)}]</span>
-          ${item.isNew ? '<span style="color:var(--accent-teal); font-size:10px;">[NOVO]</span>' : ''}
-          <span class="mono-note">(${item.depth}m)</span>
-        </div>
-        <div style="color:var(--text-bright); white-space:nowrap;">+${formatNumber(item.value)}</div>
-      </div>
-    `).join("");
+    renderLogFeed();
   }
 
   function processOfflineProgress(elapsedSeconds) {
@@ -1841,7 +2289,91 @@
       btnPrestige.disabled = pending <= 0;
       btnLabel.textContent = state.queuedChallenge ? "INICIAR EXPEDIÇÃO COM PROTOCOLO RESTRITIVO" : "INICIAR NOVA EXPEDIÇÃO";
     }
+
+    evaluateAchievements(false);
+    const totalAch = ACHIEVEMENTS.length;
+    const unlockedAch = Object.keys(state.achievements || {}).length;
+    const navAchEl = document.getElementById("navAchCount");
+    if (navAchEl) navAchEl.textContent = `${unlockedAch}/${totalAch}`;
   }
+
+  function renderAchievements() {
+    evaluateAchievements(true);
+    const totalAch = ACHIEVEMENTS.length;
+    const unlockedMap = state.achievements || {};
+    const unlockedCount = Object.keys(unlockedMap).length;
+    const pct = ((unlockedCount / totalAch) * 100).toFixed(1);
+
+    document.getElementById("achStatsHeader").textContent = `${unlockedCount} / ${totalAch} DESBLOQUEADAS (${pct}%)`;
+    document.getElementById("platinaPctLabel").textContent = `${pct}%`;
+    document.getElementById("platinaProgressFill").style.width = `${pct}%`;
+
+    const hasPlatina = !!unlockedMap["platina_abissal"];
+    const platBanner = document.getElementById("platinaBanner");
+    const platTitle = document.getElementById("platinaTitle");
+    const platDesc = document.getElementById("platinaDesc");
+    if (hasPlatina) {
+      platBanner.classList.add("completed");
+      platTitle.style.color = "var(--accent-cyan)";
+      platTitle.textContent = `TROFÉU DE PLATINA CONQUISTADO: ARQUITETO DO ABISMO`;
+      platDesc.textContent = `Platina concluída em ${formatDateTimeBR(unlockedMap["platina_abissal"])}. Todos os segredos do abismo foram catalogados.`;
+    } else {
+      platBanner.classList.remove("completed");
+      platTitle.style.color = "var(--text-bright)";
+      platTitle.textContent = `TROFÉU DE PLATINA: ARQUITETO DO ABISMO`;
+      platDesc.textContent = `Desbloqueie todas as outras ${totalAch - 1} conquistas para alcançar a platina integral da expedição BATISFERA.`;
+    }
+
+    const fState = document.getElementById("filterAchState").value;
+    const fCat = document.getElementById("filterAchCat").value;
+    const fTier = document.getElementById("filterAchTier").value;
+    const search = document.getElementById("filterAchSearch").value.toLowerCase().trim();
+
+    const filtered = ACHIEVEMENTS.filter(ach => {
+      const isUnlocked = !!unlockedMap[ach.id];
+      if (fState === "unlocked" && !isUnlocked) return false;
+      if (fState === "locked" && isUnlocked) return false;
+      if (fCat !== "all" && ach.cat !== fCat) return false;
+      if (fTier !== "all" && ach.tier !== fTier) return false;
+      if (search && !ach.name.toLowerCase().includes(search) && !ach.desc.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    const grid = document.getElementById("achievementsGrid");
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="mono-note" style="padding:12px;">Nenhuma conquista corresponde aos filtros selecionados.</div>`;
+      return;
+    }
+
+    const tierNames = { bronze: "Bronze", prata: "Prata", ouro: "Ouro", platina: "Platina" };
+
+    grid.innerHTML = filtered.map(ach => {
+      const unlockedAt = unlockedMap[ach.id];
+      const isUnlocked = !!unlockedAt;
+      return `
+        <div class="ach-card ${isUnlocked ? 'unlocked' : 'locked'} tier-${ach.tier}">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:4px;">
+              <span class="tier-badge tier-${ach.tier}">${tierNames[ach.tier]}</span>
+              <span style="font-size:10px; color:${isUnlocked ? 'var(--accent-teal)' : 'var(--text-muted)'};">
+                ${isUnlocked ? "DESBLOQUEADA" : "BLOQUEADA"}
+              </span>
+            </div>
+            <div style="font-weight:600; color:${isUnlocked ? 'var(--text-bright)' : 'var(--text-muted)'}; font-size:12px;">
+              ${ach.name}
+            </div>
+            <div class="mono-note" style="margin-top:3px; color:${isUnlocked ? 'var(--text-main)' : 'var(--text-muted)'};">
+              ${ach.desc}
+            </div>
+          </div>
+          <div class="mono-note" style="border-top:1px solid var(--border-dim); padding-top:4px; margin-top:4px; font-size:10px;">
+            ${isUnlocked ? `Obtida em: ${formatDateTimeBR(unlockedAt)}` : "Requisito pendente"}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+  window.renderAchievements = renderAchievements;
 
   function renderBestiary() {
     const discFilter = document.getElementById("filterDiscovery").value;
@@ -1973,6 +2505,7 @@
       panel.classList.toggle("active", panel.id === `tab-${tabName}`);
     });
     if (tabName === "bestiary") { updateFilterZoneCounts(); renderBestiary(); }
+    if (tabName === "achievements") { renderAchievements(); }
     updateUI();
   }
   window.switchTab = switchTab;
@@ -2161,6 +2694,7 @@
         activeChallenge: null,
         queuedChallenge: null,
         completedChallenges: {},
+    achievements: {},
         bestiary: {},
         discoveryCounter: 0,
         lastTick: Date.now(),
@@ -2169,6 +2703,7 @@
       state.upgrades = Object.assign({ line: 0, hull: 0, winch: 0, bait: 0, sonar: 0 }, remoteState.upgrades || {});
       state.doctrines = Object.assign({ tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 }, remoteState.doctrines || {});
       state.completedChallenges = remoteState.completedChallenges || {};
+      state.achievements = remoteState.achievements || {};
       state.bestiary = remoteState.bestiary || {};
       if (!state.discoveryCounter) {
         state.discoveryCounter = Object.keys(state.bestiary).length;
@@ -2209,6 +2744,7 @@
         state.upgrades = Object.assign({ line: 0, hull: 0, winch: 0, bait: 0, sonar: 0 }, parsed.upgrades || {});
         state.doctrines = Object.assign({ tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 }, parsed.doctrines || {});
         state.completedChallenges = parsed.completedChallenges || {};
+        state.achievements = parsed.achievements || {};
         state.bestiary = parsed.bestiary || {};
         if (!state.discoveryCounter) {
           state.discoveryCounter = Object.keys(state.bestiary).length;
@@ -2492,6 +3028,7 @@
         state = Object.assign({}, state, parsed);
         state.doctrines = Object.assign({ tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 }, parsed.doctrines || {});
         state.completedChallenges = parsed.completedChallenges || {};
+        state.achievements = parsed.achievements || {};
         state.lastTick = Date.now();
         saveGame();
         updateUI();
@@ -2521,6 +3058,7 @@
       activeChallenge: null,
       queuedChallenge: null,
       completedChallenges: {},
+    achievements: {},
       bestiary: {},
       discoveryCounter: 0,
       lastTick: Date.now(),
@@ -2612,4 +3150,4 @@
 })();
 </script>
 </body>
-</html>
+  </html>
