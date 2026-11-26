@@ -2149,7 +2149,23 @@
     const localTick = state.lastTick || 0;
 
     if (manual || remoteTick > localTick || state.totalCatches === 0) {
-      state = Object.assign({}, state, remoteState);
+      state = Object.assign({}, {
+        currency: 0,
+        totalEarnedRun: 0,
+        totalCatches: 0,
+        selectedZone: 0,
+        prestigeCount: 0,
+        prestigeData: 0,
+        upgrades: { line: 0, hull: 0, winch: 0, bait: 0, sonar: 0 },
+        doctrines: { tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 },
+        activeChallenge: null,
+        queuedChallenge: null,
+        completedChallenges: {},
+        bestiary: {},
+        discoveryCounter: 0,
+        lastTick: Date.now(),
+        cycleProgress: 0
+      }, remoteState);
       state.upgrades = Object.assign({ line: 0, hull: 0, winch: 0, bait: 0, sonar: 0 }, remoteState.upgrades || {});
       state.doctrines = Object.assign({ tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 }, remoteState.doctrines || {});
       state.completedChallenges = remoteState.completedChallenges || {};
@@ -2207,11 +2223,71 @@
   }
 
   function formatDateTimeBR(isoStr) {
-    if (!isoStr) return "Registro anterior";
+    if (!isoStr) return "Sem carimbo (pré-atualização)";
     const d = new Date(isoStr);
-    if (isNaN(d.getTime())) return "Registro anterior";
+    if (isNaN(d.getTime())) return "Sem carimbo (pré-atualização)";
     const pad = (n) => String(n).padStart(2, "0");
     return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  function buildPrintFishSVG(item) {
+    const seed = item.seed || hashString(item.name || "fish");
+    const rand = mulberry32(seed);
+    const printColors = ["#334155", "#047857", "#0369a1", "#4338ca", "#7e22ce", "#be185d", "#b45309", "#b91c1c"];
+    const strokeColor = printColors[item.rarityId] || "#0f172a";
+
+    const width = 96;
+    const height = 46;
+    const cx = width * 0.52;
+    const cy = height * 0.5;
+    const bodyLen = (48 + rand() * 48) * (width / 220);
+    const bodyHeight = (16 + rand() * 28) * (height / 140);
+    const noseX = cx + bodyLen * 0.55;
+    const tailX = cx - bodyLen * 0.55;
+
+    const ctrlTopY = cy - bodyHeight * (0.8 + rand() * 0.6);
+    const ctrlBotY = cy + bodyHeight * (0.8 + rand() * 0.6);
+    const bodyPath = `M ${noseX.toFixed(1)} ${cy.toFixed(1)} Q ${cx.toFixed(1)} ${ctrlTopY.toFixed(1)} ${tailX.toFixed(1)} ${cy.toFixed(1)} Q ${cx.toFixed(1)} ${ctrlBotY.toFixed(1)} ${noseX.toFixed(1)} ${cy.toFixed(1)} Z`;
+
+    const tailSpan = (12 + rand() * 18) * (height / 140);
+    const tailLen = (16 + rand() * 16) * (width / 220);
+    const tailPath = `M ${tailX.toFixed(1)} ${cy.toFixed(1)} L ${(tailX - tailLen).toFixed(1)} ${(cy - tailSpan).toFixed(1)} L ${(tailX - tailLen * 0.65).toFixed(1)} ${cy.toFixed(1)} L ${(tailX - tailLen).toFixed(1)} ${(cy + tailSpan).toFixed(1)} Z`;
+
+    let spinesSvg = "";
+    const rarityLvl = item.rarityId || 0;
+    const spineCount = 2 + Math.floor(rand() * 5) + Math.floor(rarityLvl / 2);
+    for (let i = 0; i < spineCount; i++) {
+      const t = 0.25 + (i / spineCount) * 0.5;
+      const sx = tailX + (noseX - tailX) * t;
+      const syTop = cy - bodyHeight * 0.45;
+      const syBot = cy + bodyHeight * 0.45;
+      const sLen = (8 + rand() * 14) * (height / 140);
+      spinesSvg += `<line x1="${sx.toFixed(1)}" y1="${syTop.toFixed(1)}" x2="${(sx - 2).toFixed(1)}" y2="${(syTop - sLen).toFixed(1)}" stroke="${strokeColor}" stroke-width="1"/>`;
+      if (rand() > 0.45) {
+        spinesSvg += `<line x1="${sx.toFixed(1)}" y1="${syBot.toFixed(1)}" x2="${(sx - 2).toFixed(1)}" y2="${(syBot + sLen * 0.8).toFixed(1)}" stroke="${strokeColor}" stroke-width="1"/>`;
+      }
+    }
+
+    let eyesSvg = "";
+    const eyeCount = rand() < 0.2 ? 0 : (rand() < 0.8 ? 1 : 2 + Math.floor(rand() * 2));
+    for (let e = 0; e < eyeCount; e++) {
+      const ex = noseX - bodyLen * (0.2 + e * 0.09);
+      const ey = cy - bodyHeight * (0.12 - e * 0.08);
+      const er = Math.max(1.2, (2.2 + rand() * 2.5) * (width / 220));
+      eyesSvg += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="${er.toFixed(1)}" stroke="${strokeColor}" stroke-width="1" fill="#ffffff"/>`;
+      eyesSvg += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="0.6" fill="${strokeColor}"/>`;
+    }
+
+    let lureSvg = "";
+    if ((item.zoneId || 0) >= 1 || rand() > 0.55) {
+      const lx1 = noseX - 2;
+      const ly1 = cy - bodyHeight * 0.2;
+      const lx2 = noseX + (12 + rand() * 10) * (width / 220);
+      const ly2 = cy - bodyHeight * 0.6 - (rand() * 10) * (height / 140);
+      lureSvg = `<polyline points="${lx1.toFixed(1)},${ly1.toFixed(1)} ${(lx1 + 3).toFixed(1)},${(ly2 - 2).toFixed(1)} ${lx2.toFixed(1)},${ly2.toFixed(1)}" fill="none" stroke="${strokeColor}" stroke-width="0.9"/><circle cx="${lx2.toFixed(1)}" cy="${ly2.toFixed(1)}" r="1.3" fill="${strokeColor}"/>`;
+    }
+
+    return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">${spinesSvg}<path d="${tailPath}" fill="#e2e8f0" stroke="${strokeColor}" stroke-width="1.1"/><path d="${bodyPath}" fill="#f1f5f9" stroke="${strokeColor}" stroke-width="1.2"/>${lureSvg}${eyesSvg}</svg>`;
   }
 
   function exportBestiaryPDF() {
@@ -2237,9 +2313,11 @@
       const zone = ZONES[item.zoneId] || ZONES[0];
       const discTime = formatDateTimeBR(item.discoveredAt);
       const lastTime = formatDateTimeBR(item.lastCaughtAt || item.discoveredAt);
+      const fishSvg = buildPrintFishSVG(item);
       return `
         <tr>
           <td>#${item.discoveredOrder || (idx + 1)}</td>
+          <td style="text-align:center; padding:3px;">${fishSvg}</td>
           <td><strong>${item.name}</strong><br><span class="sub">${item.mutationName}</span></td>
           <td>${rarity.name}</td>
           <td>${zone.name}<br><span class="sub">${zone.min.toLocaleString("pt-BR")}m - ${zone.max.toLocaleString("pt-BR")}m</span></td>
@@ -2364,14 +2442,15 @@
   <table>
     <thead>
       <tr>
-        <th style="width:5%;">Ordem</th>
-        <th style="width:24%;">Espécie &amp; Mutação</th>
-        <th style="width:9%;">Raridade</th>
-        <th style="width:17%;">Estrato Batimétrico</th>
-        <th style="width:14%;">Recorde (Massa/Comp.)</th>
-        <th style="width:7%;">Qtd.</th>
-        <th style="width:12%;">1ª Descoberta</th>
-        <th style="width:12%;">Última Captura</th>
+        <th style="width:4%;">Ord.</th>
+        <th style="width:10%; text-align:center;">Espécime</th>
+        <th style="width:22%;">Espécie &amp; Mutação</th>
+        <th style="width:8%;">Raridade</th>
+        <th style="width:15%;">Estrato Batimétrico</th>
+        <th style="width:13%;">Recorde (Massa/Comp.)</th>
+        <th style="width:6%;">Qtd.</th>
+        <th style="width:11%;">1ª Descoberta</th>
+        <th style="width:11%;">Última Captura</th>
       </tr>
     </thead>
     <tbody>
@@ -2447,16 +2526,22 @@
       lastTick: Date.now(),
       cycleProgress: 0
     };
-    localStorage.removeItem(SAVE_KEY);
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith("batisfera_")) localStorage.removeItem(k);
+    });
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     if (sbClient && currentCloudUser) {
       setCloudStatus("ZERANDO SAVE E BESTIÁRIO NA NUVEM...", "var(--accent-amber)");
-      await sbClient
+      const { error } = await sbClient
         .from("batisfera_saves")
         .upsert({
           user_id: currentCloudUser.id,
           save_data: state,
           updated_at: new Date().toISOString()
         }, { onConflict: "user_id" });
+      if (error) {
+        alert("Aviso ao zerar na nuvem: " + error.message);
+      }
     }
     location.reload();
   }
