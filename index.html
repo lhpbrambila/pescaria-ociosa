@@ -1978,8 +1978,8 @@
   window.switchTab = switchTab;
   window.dismissOffline = dismissOffline;
 
-  const SUPABASE_URL = "https://ofclxmwrgdelvsenkldq.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_sf_ywAsTcxWq4MD97zBxXA_8Xo8wMe2";
+  const SUPABASE_URL = "https://fvydrfzhznzfrqasymja.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_uub3WglD1mJAQ92VZlKM6g_2m-eDLeR";
   let sbClient = null;
   let currentCloudUser = null;
 
@@ -2172,6 +2172,7 @@
   window.cloudLoad = cloudLoad;
 
   function saveGame(syncCloud = true) {
+    if (isResetting) return;
     state.lastTick = Date.now();
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(state));
@@ -2424,11 +2425,40 @@
   }
   window.importSave = importSave;
 
-  function hardReset() {
-    if (confirm("Confirmar exclusão permanente de todo o progresso e bestiário?")) {
-      localStorage.removeItem(SAVE_KEY);
-      location.reload();
+  let isResetting = false;
+
+  async function hardReset() {
+    if (!confirm("Confirmar exclusão permanente de todo o progresso e bestiário?")) return;
+    isResetting = true;
+    state = {
+      currency: 0,
+      totalEarnedRun: 0,
+      totalCatches: 0,
+      selectedZone: 0,
+      prestigeCount: 0,
+      prestigeData: 0,
+      upgrades: { line: 0, hull: 0, winch: 0, bait: 0, sonar: 0 },
+      doctrines: { tel_1: 0, tel_2: 0, ext_1: 0, ext_2: 0, stb_1: 0, stb_2: 0 },
+      activeChallenge: null,
+      queuedChallenge: null,
+      completedChallenges: {},
+      bestiary: {},
+      discoveryCounter: 0,
+      lastTick: Date.now(),
+      cycleProgress: 0
+    };
+    localStorage.removeItem(SAVE_KEY);
+    if (sbClient && currentCloudUser) {
+      setCloudStatus("ZERANDO SAVE E BESTIÁRIO NA NUVEM...", "var(--accent-amber)");
+      await sbClient
+        .from("batisfera_saves")
+        .upsert({
+          user_id: currentCloudUser.id,
+          save_data: state,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "user_id" });
     }
+    location.reload();
   }
   window.hardReset = hardReset;
 
